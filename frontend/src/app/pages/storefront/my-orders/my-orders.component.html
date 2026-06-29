@@ -1,0 +1,114 @@
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="storefront-header">
+  <div class="container">
+    <div class="header-content">
+      <a class="logo" routerLink="/store">
+        <img src="/images/shifa/logo.png" alt="Shifa Ayurveda" class="header-logo"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+        <span class="logo-text">Shifa</span>
+      </a>
+      <nav class="main-nav">
+        <a routerLink="/store">Home</a>
+        <a routerLink="/store/products">Products</a>
+        <a routerLink="/store/profile">Profile</a>
+        <a routerLink="/store/orders" class="active">My Orders</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" routerLink="/store/cart" aria-label="Cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Orders ────────────────────────────────────────────── -->
+<div class="orders-container">
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">My Orders</h1>
+      <p class="page-subtitle" *ngIf="!loading">{{ totalElements }} order{{ totalElements === 1 ? '' : 's' }} total</p>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-block" *ngIf="loading">
+      <div class="spinner spinner-lg"></div>
+      <p>Loading your orders…</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="state-block empty-state" *ngIf="!loading && orders.length === 0">
+      <div class="empty-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </div>
+      <h3>No orders yet</h3>
+      <p>Looks like you haven't placed any orders. Start exploring our products!</p>
+      <a routerLink="/store/products" class="btn btn-primary">Shop Now</a>
+    </div>
+
+    <!-- Orders List -->
+    <div class="orders-list" *ngIf="!loading && orders.length > 0">
+      <div class="order-card" *ngFor="let order of orders" (click)="viewOrder(order.orderId)">
+        <div class="order-card-header">
+          <div class="order-number">
+            <span class="order-label">Order</span>
+            <span class="order-id">{{ order.orderNumber || ('#' + order.orderId) }}</span>
+          </div>
+          <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+            {{ order.status }}
+          </span>
+        </div>
+
+        <div class="order-card-body">
+          <div class="order-meta">
+            <div class="meta-item">
+              <span class="meta-label">Date</span>
+              <span class="meta-value">{{ formatDate(order.orderDate) }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Items</span>
+              <span class="meta-value">{{ order.itemCount || 0 }} item{{ (order.itemCount || 0) === 1 ? '' : 's' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Payment</span>
+              <span class="meta-value" [class.paid-text]="order.paymentStatus === 'PAID'">{{ order.paymentStatus }}</span>
+            </div>
+          </div>
+
+          <p class="order-items-preview" *ngIf="order.itemsSummary?.length">
+            {{ getItemsSummary(order) }}
+          </p>
+        </div>
+
+        <div class="order-card-footer">
+          <span class="order-total">₹{{ order.totalAmount | number:'1.2-2' }}</span>
+          <span class="view-link">View Details →</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="pagination" *ngIf="!loading && totalPages > 1" aria-label="Order pages">
+      <button class="page-btn" [disabled]="currentPage === 0" (click)="goToPage(currentPage - 1)">← Prev</button>
+      <button class="page-btn" *ngFor="let p of pages"
+              [class.active]="p === currentPage" (click)="goToPage(p)">{{ p + 1 }}</button>
+      <button class="page-btn" [disabled]="currentPage === totalPages - 1" (click)="goToPage(currentPage + 1)">Next →</button>
+    </nav>
+
+  </div>
+</div>
+
+<footer class="storefront-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2026 Shifa Ayurveda. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,264 @@
+<div class="admin-page page-content">
+  <div class="page-header">
+    <h1>🏢 Tenant Management</h1>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="toggleAnalytics()">
+        {{ showAnalytics ? '📊 Hide Analytics' : '📊 Show Analytics' }}
+      </button>
+      <button class="btn btn-primary" (click)="openModal()">
+        + Onboard Tenant
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Message -->
+  <div class="alert alert-success animate-fade-in" *ngIf="successMessage">
+    ✅ {{ successMessage }}
+  </div>
+
+  <!-- Platform Analytics Dashboard -->
+  <div class="analytics-panel card animate-fade-in" *ngIf="showAnalytics && platformAnalytics">
+    <h2 class="panel-title">📊 Platform Analytics</h2>
+    
+    <div class="analytics-grid">
+      <div class="metric-card">
+        <div class="metric-icon">🏢</div>
+        <div class="metric-data">
+          <div class="metric-value">{{ platformAnalytics.totalTenants }}</div>
+          <div class="metric-label">Total Tenants</div>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-icon">✅</div>
+        <div class="metric-data">
+          <div class="metric-value">{{ platformAnalytics.activeTenants }}</div>
+          <div class="metric-label">Active Tenants</div>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-icon">⏸️</div>
+        <div class="metric-data">
+          <div class="metric-value">{{ platformAnalytics.suspendedTenants }}</div>
+          <div class="metric-label">Suspended</div>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-icon">👥</div>
+        <div class="metric-data">
+          <div class="metric-value">{{ platformAnalytics.totalUsers }}</div>
+          <div class="metric-label">Total Users</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="breakdown-section">
+      <div class="breakdown-card">
+        <h4>Users by Role</h4>
+        <div class="breakdown-list">
+          <div class="breakdown-item" *ngFor="let entry of getUserRoleEntries()">
+            <span class="label">{{ entry.role }}</span>
+            <span class="value">{{ entry.count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="breakdown-card">
+        <h4>Tenants by Plan</h4>
+        <div class="breakdown-list">
+          <div class="breakdown-item" *ngFor="let entry of getPlanEntries()">
+            <span class="label">{{ entry.plan }}</span>
+            <span class="value">{{ entry.count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state card" *ngIf="!isLoading && tenants.length === 0">
+    <div class="empty-icon">🏢</div>
+    <h3>No tenants yet</h3>
+    <p>Onboard the first tenant to get started.</p>
+    <button class="btn btn-primary mt-4" (click)="openModal()">Onboard Tenant</button>
+  </div>
+
+  <!-- Tenant Grid -->
+  <div class="tenant-grid" *ngIf="!isLoading && tenants.length > 0">
+    <div class="tenant-card card" *ngFor="let t of tenants">
+      <div class="tenant-brand">
+        <span class="brand-initial">{{ t.companyName[0] }}</span>
+      </div>
+
+      <div class="tenant-info">
+        <h3 class="tenant-name">{{ t.companyName }}</h3>
+        <div class="tenant-key">🔑 {{ t.tenantKey }}</div>
+        <div class="tenant-meta">
+          <span [ngClass]="getStatusClass(t.status)">{{ t.status }}</span>
+        </div>
+      </div>
+
+      <div class="tenant-actions">
+        <button class="btn btn-ghost btn-sm"
+                (click)="toggleStatus(t)"
+                [title]="t.status === 'ACTIVE' ? 'Suspend' : 'Activate'">
+          {{ t.status === 'ACTIVE' ? '🔒 Suspend' : '✅ Activate' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-Step Onboard Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal wizard-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">🏢 Onboard New Tenant</h2>
+        <button class="modal-close" (click)="closeModal()">×</button>
+      </div>
+
+      <!-- Step Indicator -->
+      <div class="wizard-steps">
+        <div class="wizard-step" [class.active]="currentStep === 'details'" [class.completed]="currentStep !== 'details'">
+          <div class="step-number">1</div>
+          <div class="step-label">Details</div>
+        </div>
+        <div class="wizard-step" [class.active]="currentStep === 'database'" [class.completed]="currentStep === 'ui'">
+          <div class="step-number">2</div>
+          <div class="step-label">Database</div>
+        </div>
+        <div class="wizard-step" [class.active]="currentStep === 'ui'">
+          <div class="step-number">3</div>
+          <div class="step-label">UI Config</div>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Error Message -->
+        <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+        <div class="alert alert-success" *ngIf="validationMessage">{{ validationMessage }}</div>
+
+        <!-- Step 1: Tenant Details -->
+        <div *ngIf="currentStep === 'details'">
+          <div class="form-group">
+            <label class="form-label">Company Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="newTenant.name"
+                   (blur)="autoFillKey()" placeholder="e.g. Ayurveda Herbs Co.">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Tenant Key * <span class="hint">(unique identifier)</span></label>
+            <input type="text" class="form-control" [(ngModel)]="newTenant.tenantKey"
+                   placeholder="e.g. ayurveda_herbs">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Admin Username *</label>
+              <input type="text" class="form-control" [(ngModel)]="newTenant.adminUsername" placeholder="admin">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full Name *</label>
+              <input type="text" class="form-control" [(ngModel)]="newTenant.adminFullName" placeholder="Admin Name">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Admin Email *</label>
+            <input type="email" class="form-control" [(ngModel)]="newTenant.adminEmail" placeholder="admin@example.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Admin Password *</label>
+            <input type="password" class="form-control" [(ngModel)]="newTenant.adminPassword" placeholder="••••••••">
+          </div>
+        </div>
+
+        <!-- Step 2: Database Configuration -->
+        <div *ngIf="currentStep === 'database'">
+          <div class="info-box">
+            <strong>⚠️ Important:</strong> The database must exist before onboarding. Create it manually first.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Database URL *</label>
+            <input type="text" class="form-control font-mono" [(ngModel)]="newTenant.dbUrl"
+                   placeholder="jdbc:mysql://localhost:3306/tenant_db">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Database Username *</label>
+              <input type="text" class="form-control" [(ngModel)]="newTenant.dbUsername" placeholder="tenant_user">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Database Password *</label>
+              <input type="password" class="form-control" [(ngModel)]="newTenant.dbPassword" placeholder="••••••••">
+            </div>
+          </div>
+
+          <button class="btn btn-secondary full-width" (click)="validateDatabase()" [disabled]="isValidating">
+            <span *ngIf="!isValidating">🔍 Test Connection</span>
+            <span *ngIf="isValidating"><div class="spinner spinner-sm"></div> Testing...</span>
+          </button>
+        </div>
+
+        <!-- Step 3: UI Configuration -->
+        <div *ngIf="currentStep === 'ui'">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Primary Color</label>
+              <div class="color-input-row">
+                <input type="color" class="color-swatch" [(ngModel)]="newTenant.primaryColor">
+                <input type="text" class="form-control" [(ngModel)]="newTenant.primaryColor" maxlength="7">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Secondary Color</label>
+              <div class="color-input-row">
+                <input type="color" class="color-swatch" [(ngModel)]="newTenant.secondaryColor">
+                <input type="text" class="form-control" [(ngModel)]="newTenant.secondaryColor" maxlength="7">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Accent Color</label>
+            <div class="color-input-row">
+              <input type="color" class="color-swatch" [(ngModel)]="newTenant.accentColor">
+              <input type="text" class="form-control" [(ngModel)]="newTenant.accentColor" maxlength="7">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Logo URL <span class="hint">(optional)</span></label>
+            <input type="text" class="form-control" [(ngModel)]="newTenant.logoUrl" placeholder="https://...">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="prevStep()" *ngIf="currentStep !== 'details'">
+          ← Back
+        </button>
+        <button class="btn btn-secondary" (click)="closeModal()" *ngIf="currentStep === 'details'">
+          Cancel
+        </button>
+        
+        <button class="btn btn-primary" (click)="nextStep()" *ngIf="currentStep !== 'ui'">
+          Next →
+        </button>
+        <button class="btn btn-primary" (click)="onboardTenant()" [disabled]="isSaving" *ngIf="currentStep === 'ui'">
+          <span *ngIf="!isSaving">🚀 Onboard Tenant</span>
+          <span *ngIf="isSaving"><div class="spinner spinner-sm"></div> Provisioning...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

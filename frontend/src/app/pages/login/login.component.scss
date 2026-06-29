@@ -1,0 +1,196 @@
+/* ===================================================
+   Login Page — Warm Light Luxury Theme
+   Elegant centered card on ivory background.
+   Cormorant Garamond branding, clean green submit.
+   =================================================== */
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle warm botanical texture — no dark orbs */
+.login-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Soft warm-toned ambient panels — replace dark floating orbs */
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.18;
+  filter: blur(90px);
+}
+
+.bg-orb-1 {
+  width: 520px;
+  height: 520px;
+  background: #D4E8D4; /* pale sage green */
+  top: -180px;
+  right: -180px;
+}
+
+.bg-orb-2 {
+  width: 380px;
+  height: 380px;
+  background: #E8DCCA; /* warm sand */
+  bottom: -120px;
+  left: -120px;
+}
+
+.bg-orb-3 {
+  width: 260px;
+  height: 260px;
+  background: #F0E8D0; /* cream gold */
+  top: 55%;
+  left: 40%;
+}
+
+/* Login Card */
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 52px 44px;
+  position: relative;
+  z-index: 1;
+  margin: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+
+  svg {
+    /* no glow — clean */
+    filter: none;
+  }
+}
+
+/* Brand title — Cormorant Garamond, deep forest green */
+.login-title {
+  font-family: var(--font-family-serif);
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--primary-color);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin-bottom: 6px;
+  /* Remove dark gradient text — plain brand color */
+  background: none;
+  -webkit-text-fill-color: unset;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+}
+
+.login-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* Error message — warm light red tint */
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(192, 57, 43, 0.07);
+  border: 1px solid rgba(192, 57, 43, 0.18);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: var(--font-size-sm);
+  margin-bottom: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Form */
+.login-form {
+  .form-group {
+    margin-bottom: 22px;
+  }
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.form-control.with-icon {
+  padding-left: 44px;
+}
+
+.login-btn {
+  margin-top: 8px;
+  height: 48px;
+  font-size: var(--font-size-md) !important;
+  letter-spacing: 0.03em;
+  width: 100%;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-weight: 500;
+
+  &:hover:not(:disabled) {
+    background: var(--primary-dark);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* Footer */
+.login-footer {
+  text-align: center;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+
+  p {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 36px 24px;
+    margin: 14px;
+  }
+
+  .login-header {
+    margin-bottom: 30px;
+  }
+
+  .login-title {
+    font-size: var(--font-size-xl);
+  }
+}

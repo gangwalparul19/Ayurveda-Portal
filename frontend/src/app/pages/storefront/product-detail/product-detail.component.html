@@ -1,0 +1,356 @@
+<!-- ============================================================
+     Product Detail – Luxury Ayurveda aesthetic
+     ============================================================ -->
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="storefront-header">
+  <div class="container">
+    <div class="header-content">
+      <a class="logo" (click)="goBack()">
+        <img src="/images/shifa/logo.png" alt="Shifa Ayurveda" class="header-logo"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+        <span class="logo-text">Shifa</span>
+      </a>
+
+      <input type="checkbox" id="sf-nav-detail" class="nav-toggle" hidden>
+      <label for="sf-nav-detail" class="nav-toggle-btn" aria-label="Toggle navigation">
+        <app-icon name="menu" [size]="22" class="icon-open"></app-icon>
+        <app-icon name="close" [size]="22" class="icon-close"></app-icon>
+      </label>
+
+      <nav class="main-nav">
+        <a routerLink="/store" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+        <a routerLink="/store/products" routerLinkActive="active">Products</a>
+        <a routerLink="/store/wishlist" routerLinkActive="active">Wishlist</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-btn" routerLink="/store/cart" aria-label="Cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Main Content ──────────────────────────────────────── -->
+<div class="product-detail-container">
+  <div class="container">
+
+    <!-- Breadcrumb & Back -->
+    <button class="back-button" (click)="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Back to Products
+    </button>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="state-block">
+      <div class="spinner spinner-lg"></div>
+      <p>Loading product…</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !loading" class="state-block">
+      <div class="state-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h3>Product Not Found</h3>
+      <p>Sorry, we couldn't find the product you're looking for.</p>
+      <button class="btn btn-primary" (click)="goBack()">Browse Products</button>
+    </div>
+
+    <!-- Product Detail -->
+    <div *ngIf="product && !loading" class="product-detail">
+
+      <div class="product-layout">
+
+        <!-- Image Column -->
+        <div class="product-image-section">
+          <div class="main-image" [class.is-out]="product.stockQuantity === 0">
+            <img [src]="product.imageUrl" [alt]="product.name" (error)="onImageError($event)">
+            <span class="discount-badge" *ngIf="getDiscount() > 0">{{ getDiscount() }}% OFF</span>
+          </div>
+        </div>
+
+        <!-- Info Column -->
+        <div class="product-info-section">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a routerLink="/store">Home</a>
+            <span class="sep" aria-hidden="true">/</span>
+            <a routerLink="/store/products">Products</a>
+            <span class="sep" aria-hidden="true">/</span>
+            <span class="current">{{ product.category }}</span>
+          </nav>
+
+          <h1 class="product-title">{{ product.name }}</h1>
+
+          <div class="product-meta">
+            <span class="category-badge">{{ product.category }}</span>
+            <span class="sku">SKU: {{ product.sku }}</span>
+          </div>
+
+          <div class="price-section">
+            <span class="current-price">₹{{ product.price }}</span>
+            <ng-container *ngIf="product.mrp > product.price">
+              <span class="original-price">₹{{ product.mrp }}</span>
+              <span class="savings">Save ₹{{ product.mrp - product.price }}</span>
+            </ng-container>
+          </div>
+
+          <div class="stock-status">
+            <span *ngIf="product.stockQuantity > 0" class="in-stock">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              In Stock ({{ product.stockQuantity }} available)
+            </span>
+            <span *ngIf="product.stockQuantity === 0" class="out-of-stock">Out of Stock</span>
+          </div>
+
+          <!-- Description -->
+          <div class="description">
+            <h3>About this Product</h3>
+            <p>{{ product.description }}</p>
+          </div>
+
+          <!-- Specs -->
+          <div class="product-specs">
+            <div class="spec-item" *ngIf="product.weight">
+              <span class="spec-label">Weight</span>
+              <span class="spec-value">{{ product.weight }}</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Category</span>
+              <span class="spec-value">{{ product.category }}</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">SKU</span>
+              <span class="spec-value">{{ product.sku }}</span>
+            </div>
+          </div>
+
+          <!-- Purchase Actions -->
+          <div class="purchase-section" *ngIf="product.stockQuantity > 0">
+            <div class="quantity-selector">
+              <label>Quantity</label>
+              <div class="quantity-controls">
+                <button class="qty-btn" (click)="decreaseQuantity()" [disabled]="quantity <= 1" aria-label="Decrease quantity">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+                <span class="qty-value">{{ quantity }}</span>
+                <button class="qty-btn" (click)="increaseQuantity()" [disabled]="quantity >= product.stockQuantity" aria-label="Increase quantity">
+                  <app-icon name="plus" [size]="14"></app-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <button class="btn btn-primary btn-full" (click)="addToCart()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                Add to Cart &amp; Checkout
+              </button>
+
+              <button class="btn btn-outline btn-full" (click)="addToCartAndContinue()">
+                Continue Shopping
+              </button>
+
+              <button class="wishlist-toggle" [class.active]="isInWishlist()" (click)="toggleWishlist()">
+                <svg width="16" height="16" viewBox="0 0 24 24" [attr.fill]="isInWishlist() ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                {{ isInWishlist() ? 'Remove from Wishlist' : 'Add to Wishlist' }}
+              </button>
+
+              <!-- WhatsApp Share -->
+              <button class="whatsapp-btn" (click)="shareOnWhatsApp()" aria-label="Share on WhatsApp">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+                Share on WhatsApp
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Feature Badges -->
+      <div class="product-features">
+        <div class="feature">
+          <span class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6"></path>
+            </svg>
+          </span>
+          <div>
+            <h4>100% Natural</h4>
+            <p>Pure Ayurvedic ingredients</p>
+          </div>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path>
+              <path d="M15 18H9"></path>
+              <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path>
+              <circle cx="7" cy="18" r="2"></circle>
+              <circle cx="17" cy="18" r="2"></circle>
+            </svg>
+          </span>
+          <div>
+            <h4>Fast Delivery</h4>
+            <p>Quick &amp; secure shipping</p>
+          </div>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+          </span>
+          <div>
+            <h4>Quality Assured</h4>
+            <p>Certified &amp; tested products</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Reviews Section ─────────────────────────────────── -->
+      <div class="reviews-section">
+        <h2 class="reviews-title">Customer Reviews</h2>
+
+        <!-- Rating Summary -->
+        <div class="rating-summary" *ngIf="reviewTotalCount > 0">
+          <div class="rating-avg">
+            <span class="avg-number">{{ reviewAverageRating | number:'1.1-1' }}</span>
+            <div class="avg-stars">
+              <span *ngFor="let s of starsArray(5)" class="star" [class.filled]="s <= reviewAverageRating">★</span>
+            </div>
+            <span class="avg-count">{{ reviewTotalCount }} review{{ reviewTotalCount === 1 ? '' : 's' }}</span>
+          </div>
+          <div class="rating-bars">
+            <div class="rating-bar-row" *ngFor="let s of [5,4,3,2,1]">
+              <span class="bar-label">{{ s }} ★</span>
+              <div class="bar-track">
+                <div class="bar-fill" [style.width.%]="getStarPercent(s)"></div>
+              </div>
+              <span class="bar-count">{{ getStarCountForRating(s) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="reviews-list" *ngIf="!reviewsLoading && reviews.length > 0">
+          <div class="review-card" *ngFor="let r of reviews">
+            <div class="review-header">
+              <div class="review-meta">
+                <span class="reviewer-name">{{ r.reviewerName }}</span>
+                <span class="review-date">{{ formatReviewDate(r.createdAt || r.date) }}</span>
+              </div>
+              <div class="review-stars">
+                <span *ngFor="let s of starsArray(5)" class="star" [class.filled]="s <= r.rating">★</span>
+              </div>
+              <span class="verified-badge" *ngIf="r.verifiedPurchase">✔ Verified Purchase</span>
+            </div>
+            <p class="review-title" *ngIf="r.title"><strong>{{ r.title }}</strong></p>
+            <p class="review-text">{{ r.reviewText }}</p>
+          </div>
+        </div>
+
+        <div class="reviews-empty" *ngIf="!reviewsLoading && reviews.length === 0">
+          <p>No reviews yet. Be the first to review this product!</p>
+        </div>
+
+        <!-- Write a Review -->
+        <div class="write-review">
+          <h3 class="write-review-title">Write a Review</h3>
+
+          <div class="review-submitted" *ngIf="reviewSubmitted">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Your review has been submitted and is pending approval. Thank you!
+          </div>
+
+          <form (ngSubmit)="submitReview()" class="review-form" *ngIf="!reviewSubmitted">
+            <div class="review-error" *ngIf="reviewError">{{ reviewError }}</div>
+
+            <div class="form-row">
+              <div class="sf-field">
+                <label class="form-label">Your Name *</label>
+                <input type="text" class="form-control" [(ngModel)]="reviewerName" name="reviewerName" placeholder="Your name">
+              </div>
+            </div>
+
+            <div class="sf-field">
+              <label class="form-label">Rating *</label>
+              <div class="star-input">
+                <button type="button" *ngFor="let s of starsArray(5)"
+                        class="star-btn" [class.active]="s <= reviewRating"
+                        (click)="setReviewRating(s)" [attr.aria-label]="s + ' stars'">★</button>
+              </div>
+            </div>
+
+            <div class="sf-field">
+              <label class="form-label">Title (optional)</label>
+              <input type="text" class="form-control" [(ngModel)]="reviewTitle" name="reviewTitle" placeholder="Summary of your review">
+            </div>
+
+            <div class="sf-field">
+              <label class="form-label">Review *</label>
+              <textarea class="form-control" rows="4" [(ngModel)]="reviewText" name="reviewText" placeholder="Share your experience…"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" [disabled]="reviewSubmitting">
+              <span class="spinner" *ngIf="reviewSubmitting"></span>
+              <span *ngIf="!reviewSubmitting">Submit Review</span>
+              <span *ngIf="reviewSubmitting">Submitting…</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<footer class="storefront-footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section footer-brand">
+        <span class="footer-logo">Shifa</span>
+        <p>Your trusted source for authentic Ayurvedic products.</p>
+      </div>
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a routerLink="/store">Home</a></li>
+          <li><a routerLink="/store/products">Products</a></li>
+          <li><a routerLink="/store/cart">Cart</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Shifa. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

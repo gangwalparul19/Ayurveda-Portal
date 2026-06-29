@@ -1,0 +1,55 @@
+<!-- ── Storefront Login ───────────────────────────────────── -->
+<div class="sf-auth-wrapper">
+  <div class="sf-auth-card">
+    <!-- Logo / Brand -->
+    <div class="sf-auth-brand">
+      <img src="/images/shifa/logo.png" alt="Shifa Ayurveda" class="sf-logo-img"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+      <span class="sf-logo-fallback">Shifa Ayurveda</span>
+      <p class="sf-auth-tagline">Sign in to your account</p>
+    </div>
+
+    <!-- Error -->
+    <div class="sf-alert-error" *ngIf="errorMessage">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      {{ errorMessage }}
+    </div>
+
+    <!-- Form -->
+    <form (ngSubmit)="onSubmit()" class="sf-auth-form" novalidate>
+      <div class="sf-field">
+        <label class="form-label" for="sf-email">Email address</label>
+        <input id="sf-email" type="email" class="form-control"
+               placeholder="you@example.com"
+               [(ngModel)]="email" name="email"
+               autocomplete="email" [disabled]="isLoading">
+      </div>
+
+      <div class="sf-field">
+        <label class="form-label" for="sf-password">Password</label>
+        <input id="sf-password" type="password" class="form-control"
+               placeholder="Enter your password"
+               [(ngModel)]="password" name="password"
+               autocomplete="current-password" [disabled]="isLoading">
+      </div>
+
+      <button type="submit" class="btn btn-primary sf-submit-btn" [disabled]="isLoading">
+        <span class="spinner" *ngIf="isLoading"></span>
+        <span *ngIf="!isLoading">Sign In</span>
+        <span *ngIf="isLoading">Signing in…</span>
+      </button>
+    </form>
+
+    <p class="sf-auth-switch">
+      Don't have an account?
+      <a routerLink="/store/register">Create one</a>
+    </p>
+
+    <div class="sf-back-link">
+      <a routerLink="/store">← Back to Shop</a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,98 @@
+<div class="app-layout"
+     [class.sidebar-collapsed]="sidebarCollapsed"
+     [class.mobile-nav-open]="mobileNavOpen">
+
+  <!-- Mobile backdrop overlay -->
+  <div class="nav-backdrop" (click)="closeMobileNav()" aria-hidden="true"></div>
+
+  <!-- Sidebar / Off-canvas drawer -->
+  <aside class="sidebar">
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <img src="/images/shifa/logo.png" alt="Shifa" class="brand-logo-img">
+      </div>
+      <span class="brand-text" *ngIf="!sidebarCollapsed">
+        {{ user?.companyName || 'Ayurveda' }}
+      </span>
+      <button class="drawer-close btn btn-ghost" (click)="closeMobileNav()" aria-label="Close menu">
+        <app-icon name="close" [size]="20" />
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-section-label" *ngIf="!sidebarCollapsed">Main Menu</span>
+        <a *ngFor="let item of navItems"
+           [routerLink]="item.route"
+           routerLinkActive="active"
+           class="nav-item"
+           [class.hidden]="!isVisible(item)"
+           [title]="item.label"
+           (click)="onNavSelect()">
+          <span class="nav-icon"><app-icon [name]="item.icon" [size]="20" /></span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+        </a>
+      </div>
+
+      <!-- Admin Section -->
+      <div class="nav-section" *ngIf="user?.role === 'SUPER_ADMIN'">
+        <span class="nav-section-label" *ngIf="!sidebarCollapsed">Administration</span>
+        <a *ngFor="let item of adminNavItems"
+           [routerLink]="item.route"
+           routerLinkActive="active"
+           class="nav-item"
+           [title]="item.label"
+           (click)="onNavSelect()">
+          <span class="nav-icon"><app-icon [name]="item.icon" [size]="20" /></span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <div class="user-card" *ngIf="!sidebarCollapsed">
+        <div class="user-avatar">{{ getUserInitials() }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ user?.fullName }}</span>
+          <span class="user-role">{{ user?.role?.replace('_', ' ') }}</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost logout-btn" (click)="logout()" title="Sign out">
+        <app-icon name="logout" [size]="18" />
+        <span *ngIf="!sidebarCollapsed">Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn btn-ghost sidebar-toggle" (click)="toggleSidebar()" aria-label="Toggle navigation">
+          <app-icon name="menu" [size]="20" />
+        </button>
+        <img src="/images/shifa/logo.png" alt="Shifa" class="topbar-logo-img"
+             onerror="this.style.display='none'">
+        <span class="topbar-brand">{{ user?.companyName || 'Ayurveda' }}</span>
+      </div>
+
+      <div class="topbar-right">
+        <div class="topbar-tenant" *ngIf="user?.tenantKey">
+          <span class="badge badge-active">{{ user?.tenantKey }}</span>
+        </div>
+        <div class="topbar-user">
+          <div class="user-avatar-sm">{{ getUserInitials() }}</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="content-area">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

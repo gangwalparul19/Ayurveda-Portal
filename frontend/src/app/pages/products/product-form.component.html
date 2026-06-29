@@ -1,0 +1,153 @@
+<div class="product-form-page page-content">
+  <div class="page-header">
+    <h1>{{ isEditMode ? 'Edit Product' : 'New Product' }}</h1>
+    <button class="btn btn-ghost" routerLink="/products">← Back to Products</button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <!-- Success Toast -->
+  <div class="toast toast-success animate-fade-in" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Banner -->
+  <div class="toast toast-error animate-fade-in" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Form -->
+  <form (ngSubmit)="onSubmit()" *ngIf="!isLoading" class="animate-fade-in">
+    <div class="form-grid">
+      <!-- Left Column: Core Info -->
+      <div class="form-section card">
+        <h3 class="section-title">Product Information</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">SKU *</label>
+            <input type="text" class="form-control" placeholder="e.g. ASH-CHU-100"
+                   [(ngModel)]="product.sku" name="sku" [disabled]="isEditMode">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit</label>
+            <select class="form-control" [(ngModel)]="product.unit" name="unit">
+              <option *ngFor="let u of units" [value]="u">{{ u }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Product Name *</label>
+          <input type="text" class="form-control" placeholder="e.g. Ashwagandha Churna 100gm"
+                 [(ngModel)]="product.name" name="name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" placeholder="Brief product description..."
+                    [(ngModel)]="product.description" name="description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <div class="category-row">
+            <select class="form-control" [(ngModel)]="product.category" name="category" *ngIf="!showNewCategory">
+              <option value="">Select category</option>
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            </select>
+            <input type="text" class="form-control" placeholder="New category name..."
+                   [(ngModel)]="newCategory" name="newCategory" *ngIf="showNewCategory">
+            <button type="button" class="btn btn-ghost btn-sm" (click)="toggleNewCategory()">
+              {{ showNewCategory ? 'Use Existing' : '+ New' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Image URL</label>
+          <input type="text" class="form-control" placeholder="https://..."
+                 [(ngModel)]="product.imageUrl" name="imageUrl">
+          <div class="image-preview" *ngIf="product.imageUrl">
+            <img [src]="product.imageUrl" alt="Preview" (error)="product.imageUrl = ''">
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Pricing & Stock -->
+      <div class="form-column">
+        <div class="form-section card">
+          <h3 class="section-title">Pricing</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">MRP (₹) *</label>
+              <input type="number" class="form-control" placeholder="0.00"
+                     [(ngModel)]="product.mrp" name="mrp" min="0" step="0.01"
+                     (blur)="autoFillSalePrice()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sale Price (₹) *</label>
+              <input type="number" class="form-control" placeholder="0.00"
+                     [(ngModel)]="product.salePrice" name="salePrice" min="0" step="0.01">
+            </div>
+          </div>
+
+          <div class="price-diff" *ngIf="product.mrp && product.salePrice && product.mrp > product.salePrice">
+            <span class="discount-tag">
+              {{ ((1 - (product.salePrice ?? 0) / (product.mrp ?? 1)) * 100) | number:'1.0-0' }}% discount
+            </span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">HSN Code</label>
+              <input type="text" class="form-control" placeholder="e.g. 3003"
+                     [(ngModel)]="product.hsnCode" name="hsnCode">
+            </div>
+            <div class="form-group">
+              <label class="form-label">GST Rate (%)</label>
+              <input type="number" class="form-control" placeholder="0"
+                     [(ngModel)]="product.gstRate" name="gstRate" min="0" max="28" step="0.01">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section card">
+          <h3 class="section-title">Inventory</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Stock Quantity</label>
+              <input type="number" class="form-control" placeholder="0"
+                     [(ngModel)]="product.stockQuantity" name="stockQuantity" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Low Stock Threshold</label>
+              <input type="number" class="form-control" placeholder="10"
+                     [(ngModel)]="product.lowStockThreshold" name="lowStockThreshold" min="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Weight (grams)</label>
+            <input type="number" class="form-control" placeholder="0"
+                   [(ngModel)]="product.weightGrams" name="weightGrams" min="0" step="0.1">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" routerLink="/products">Cancel</button>
+      <button type="submit" class="btn btn-primary btn-lg" [disabled]="isSaving">
+        <span class="spinner" *ngIf="isSaving"></span>
+        {{ isSaving ? 'Saving...' : (isEditMode ? 'Update Product' : 'Create Product') }}
+      </button>
+    </div>
+  </form>
+</div>

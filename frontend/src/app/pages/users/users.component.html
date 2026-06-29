@@ -1,0 +1,122 @@
+<div class="users-page page-content">
+  <div class="page-header">
+    <h1 class="title-with-icon"><app-icon name="users" [size]="22"></app-icon> User Management</h1>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <app-icon name="plus" [size]="16"></app-icon>
+      Add User
+    </button>
+  </div>
+
+  <div class="toast toast-success animate-fade-in" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="loading-state" *ngIf="isLoading"><div class="spinner spinner-lg"></div></div>
+
+  <div class="empty-state card" *ngIf="!isLoading && users.length === 0">
+    <div class="empty-icon"><app-icon name="users" [size]="44"></app-icon></div>
+    <h3>No users found</h3>
+    <p>Create the first user to get started.</p>
+  </div>
+
+  <!-- Users Table -->
+  <div class="card table-wrapper" *ngIf="!isLoading && users.length > 0">
+    <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users" class="animate-fade-in">
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar" [ngClass]="getRoleClass(user.role)">{{ getInitials(user.fullName) }}</div>
+              <span class="user-name">{{ user.fullName }}</span>
+            </div>
+          </td>
+          <td class="font-mono">{{ user.username }}</td>
+          <td class="text-muted">{{ user.email || '—' }}</td>
+          <td>
+            <span class="role-badge" [ngClass]="getRoleClass(user.role)">{{ user.role }}</span>
+          </td>
+          <td>
+            <span class="status-dot" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+              {{ user.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td class="text-muted">{{ user.createdAt | date:'mediumDate' }}</td>
+          <td>
+            <div class="action-cell">
+              <button class="btn btn-ghost btn-sm icon-btn" (click)="openEditModal(user)" title="Edit" aria-label="Edit user">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn btn-ghost btn-sm icon-btn" (click)="toggleUserStatus(user)"
+                      [title]="user.isActive ? 'Deactivate' : 'Activate'"
+                      [attr.aria-label]="user.isActive ? 'Deactivate user' : 'Activate user'">
+                <svg *ngIf="user.isActive" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <svg *ngIf="!user.isActive" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card glass-panel animate-fade-in" (click)="$event.stopPropagation()">
+      <h3>{{ isEditing ? 'Edit User' : 'New User' }}</h3>
+      <div class="toast toast-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input type="text" class="form-control" [(ngModel)]="editUser.username"
+                 [disabled]="isEditing" placeholder="e.g. john.doe">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" class="form-control" [(ngModel)]="editUser.fullName" placeholder="John Doe">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" [(ngModel)]="editUser.email" placeholder="john@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role *</label>
+          <select class="form-control" [(ngModel)]="editUser.role">
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">{{ isEditing ? 'New Password (leave blank to keep)' : 'Password *' }}</label>
+        <input type="password" class="form-control" [(ngModel)]="editUser.password" placeholder="••••••••">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="saveUser()" [disabled]="isSaving">
+          <span class="spinner" *ngIf="isSaving"></span>
+          {{ isSaving ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

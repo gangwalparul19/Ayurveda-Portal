@@ -1,0 +1,150 @@
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="storefront-header">
+  <div class="container">
+    <div class="header-content">
+      <a class="logo" routerLink="/store">
+        <img src="/images/shifa/logo.png" alt="Shifa Ayurveda" class="header-logo"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+        <span class="logo-text">Shifa</span>
+      </a>
+      <nav class="main-nav">
+        <a routerLink="/store">Home</a>
+        <a routerLink="/store/products">Products</a>
+        <a routerLink="/store/profile">Profile</a>
+        <a routerLink="/store/orders" class="active">My Orders</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" routerLink="/store/cart" aria-label="Cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="od-container">
+  <div class="container">
+
+    <button class="back-btn" (click)="goBack()">
+      ← Back to Orders
+    </button>
+
+    <!-- Loading -->
+    <div class="state-block" *ngIf="loading">
+      <div class="spinner spinner-lg"></div>
+      <p>Loading order…</p>
+    </div>
+
+    <ng-container *ngIf="!loading && order">
+
+      <!-- Order Header -->
+      <div class="od-header-card">
+        <div class="od-header-info">
+          <div>
+            <p class="od-label">Order Number</p>
+            <h1 class="od-order-num">{{ order.orderNumber || ('#' + order.orderId) }}</h1>
+          </div>
+          <div>
+            <p class="od-label">Placed On</p>
+            <p class="od-value">{{ formatDate(order.orderDate) }}</p>
+          </div>
+          <div>
+            <p class="od-label">Payment</p>
+            <p class="od-value" [class.paid-text]="order.paymentStatus === 'PAID'">{{ order.paymentStatus }}</p>
+          </div>
+        </div>
+        <span class="status-badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span>
+      </div>
+
+      <!-- Status Timeline -->
+      <div class="od-card">
+        <h2 class="od-card-title">Order Progress</h2>
+        <div class="timeline">
+          <div class="timeline-step" *ngFor="let step of steps; let i = index"
+               [class.completed]="isStepCompleted(i)"
+               [class.active]="isStepActive(i)">
+            <div class="step-dot">
+              <svg *ngIf="isStepCompleted(i) && !isStepActive(i)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span *ngIf="isStepActive(i)" class="step-pulse"></span>
+            </div>
+            <div class="step-connector" *ngIf="i < steps.length - 1"></div>
+            <p class="step-label">{{ step }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status History -->
+      <div class="od-card" *ngIf="order.statusHistory?.length">
+        <h2 class="od-card-title">Status History</h2>
+        <ul class="history-list">
+          <li class="history-item" *ngFor="let h of order.statusHistory">
+            <span class="history-dot"></span>
+            <div>
+              <p class="history-status">{{ h.status }}</p>
+              <p class="history-time">{{ formatDate(h.changedAt || h.timestamp) }}</p>
+              <p class="history-note" *ngIf="h.note">{{ h.note }}</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Items Table -->
+      <div class="od-card">
+        <h2 class="od-card-title">Items Ordered</h2>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="num">Qty</th>
+              <th class="num">Unit Price</th>
+              <th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of order.items">
+              <td>{{ item.productName || item.name }}</td>
+              <td class="num">{{ item.quantity }}</td>
+              <td class="num">₹{{ item.unitPrice | number:'1.2-2' }}</td>
+              <td class="num">₹{{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totals -->
+      <div class="od-card od-totals">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span>₹{{ getSubtotal() | number:'1.2-2' }}</span>
+        </div>
+        <div class="total-row" *ngIf="order.shippingAmount">
+          <span>Shipping</span>
+          <span>₹{{ order.shippingAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="total-row discount" *ngIf="order.discountAmount > 0">
+          <span>Discount</span>
+          <span>–₹{{ order.discountAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="total-row grand-total">
+          <span>Total</span>
+          <span>₹{{ order.totalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>
+
+<footer class="storefront-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2026 Shifa Ayurveda. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

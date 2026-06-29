@@ -1,0 +1,149 @@
+<div class="targets-page page-content">
+  <div class="page-header">
+    <h1 class="title-with-icon"><app-icon name="targets" [size]="22"></app-icon> Salesperson Targets</h1>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="recalculateTargets()" *ngIf="canEdit()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        Recalculate
+      </button>
+      <button class="btn btn-primary" (click)="openSetTargetModal()" *ngIf="canEdit()">
+        <app-icon name="plus" [size]="16"></app-icon> Set Target
+      </button>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div class="alert alert-success animate-fade-in" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+  <div class="alert alert-error animate-fade-in" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Month/Year Selector -->
+  <div class="card filter-card">
+    <div class="month-year-selector">
+      <div class="form-group">
+        <label class="form-label">Month</label>
+        <select class="form-control" [(ngModel)]="selectedMonth" (change)="loadMonthTargets()">
+          <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Year</label>
+        <select class="form-control" [(ngModel)]="selectedYear" (change)="loadMonthTargets()">
+          <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <!-- Targets List -->
+  <div class="targets-grid" *ngIf="!isLoading">
+    <div class="card target-card" *ngFor="let target of monthTargets">
+      <div class="target-header">
+        <div class="target-info">
+          <h3 class="target-title">Salesperson #{{ target.salespersonId }}</h3>
+          <span class="target-period">{{ getMonthLabel(selectedMonth) }} {{ selectedYear }}</span>
+        </div>
+        <button class="btn-icon btn-danger" (click)="deleteTarget(target.id)" *ngIf="canEdit()" title="Delete Target" aria-label="Delete target">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="target-stats">
+        <div class="stat">
+          <span class="stat-label">Target</span>
+          <span class="stat-value">₹{{ target.targetAmount | number:'1.0-0' }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Achieved</span>
+          <span class="stat-value">₹{{ target.achievedAmount | number:'1.0-0' }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Percentage</span>
+          <span class="stat-value" [class]="getStatusClass(target.percentageAchieved)">
+            {{ target.percentageAchieved | number:'1.0-0' }}%
+          </span>
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" 
+               [class]="getStatusClass(target.percentageAchieved)"
+               [style.width.%]="target.percentageAchieved > 100 ? 100 : target.percentageAchieved">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state card" *ngIf="monthTargets.length === 0">
+      <p class="empty-icon"><app-icon name="targets" [size]="44"></app-icon></p>
+      <p class="empty-text">No targets set for {{ getMonthLabel(selectedMonth) }} {{ selectedYear }}</p>
+      <button class="btn btn-primary" (click)="openSetTargetModal()" *ngIf="canEdit()">
+        Set First Target
+      </button>
+    </div>
+  </div>
+
+  <!-- Set Target Modal -->
+  <div class="modal-overlay" *ngIf="showSetTargetModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Set Salesperson Target</h2>
+        <button class="modal-close" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+        <div class="form-group">
+          <label class="form-label">Salesperson ID *</label>
+          <input type="number" class="form-control" [(ngModel)]="targetForm.salespersonId" 
+                 placeholder="Enter salesperson user ID">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Month *</label>
+            <select class="form-control" [(ngModel)]="targetForm.month">
+              <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year *</label>
+            <select class="form-control" [(ngModel)]="targetForm.year">
+              <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Target Amount (₹) *</label>
+          <input type="number" class="form-control" [(ngModel)]="targetForm.targetAmount" 
+                 placeholder="Enter target amount">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="isSaving">Cancel</button>
+        <button class="btn btn-primary" (click)="saveTarget()" [disabled]="isSaving">
+          <span *ngIf="!isSaving">Set Target</span>
+          <span *ngIf="isSaving"><div class="spinner spinner-sm"></div> Saving...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

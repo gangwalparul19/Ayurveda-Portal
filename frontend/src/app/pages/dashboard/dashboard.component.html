@@ -1,0 +1,142 @@
+<div class="dashboard page-content">
+  <!-- Greeting Header -->
+  <div class="page-header">
+    <div>
+      <h1>{{ greeting }}, {{ (user?.fullName ?? 'User').split(' ')[0] }}</h1>
+      <p class="text-muted mt-2">Here's what's happening with your business today.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" routerLink="/orders/new">
+        <app-icon name="plus" [size]="16"></app-icon>
+        New Order
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-grid" *ngIf="isLoading">
+    <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
+      <div class="skeleton-icon pulse"></div>
+      <div class="skeleton-text pulse"></div>
+      <div class="skeleton-value pulse"></div>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid" *ngIf="!isLoading">
+    <div class="stat-card animate-fade-in" style="animation-delay: 0ms">
+      <div class="stat-icon"><app-icon name="orders" [size]="24"></app-icon></div>
+      <div class="stat-value">{{ stats.todayOrders }}</div>
+      <div class="stat-label">Today's Orders</div>
+      <div class="stat-trend trend-up">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        </svg>
+        <span>vs yesterday</span>
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade-in" style="animation-delay: 80ms">
+      <div class="stat-icon"><app-icon name="billing" [size]="24"></app-icon></div>
+      <div class="stat-value">₹{{ stats.todayRevenue | number:'1.0-0' }}</div>
+      <div class="stat-label">Today's Revenue</div>
+      <div class="stat-trend trend-up">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        </svg>
+        <span>vs yesterday</span>
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade-in" style="animation-delay: 160ms">
+      <div class="stat-icon stat-icon-warning"><app-icon name="orders" [size]="24"></app-icon></div>
+      <div class="stat-value">{{ stats.pendingOrders }}</div>
+      <div class="stat-label">Pending Orders</div>
+      <div class="stat-trend trend-neutral">
+        <span>Needs attention</span>
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade-in" style="animation-delay: 240ms">
+      <div class="stat-icon"><app-icon name="reports" [size]="24"></app-icon></div>
+      <div class="stat-value">₹{{ stats.monthlyRevenue | number:'1.0-0' }}</div>
+      <div class="stat-label">Monthly Revenue</div>
+      <div class="stat-trend trend-up">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        </svg>
+        <span>this month</span>
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade-in" style="animation-delay: 320ms">
+      <div class="stat-icon stat-icon-danger"><app-icon name="products" [size]="24"></app-icon></div>
+      <div class="stat-value">{{ stats.lowStockProducts }}</div>
+      <div class="stat-label">Low Stock Items</div>
+      <div class="stat-trend trend-warning">
+        <span>Restock needed</span>
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade-in" style="animation-delay: 400ms">
+      <div class="stat-icon"><app-icon name="customers" [size]="24"></app-icon></div>
+      <div class="stat-value">{{ stats.totalCustomers }}</div>
+      <div class="stat-label">Total Customers</div>
+      <div class="stat-trend trend-up">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        </svg>
+        <span>growing</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="section-grid" *ngIf="!isLoading">
+    <!-- Recent Activity -->
+    <div class="card animate-fade-in" style="animation-delay: 500ms">
+      <div class="card-header">
+        <h3 class="card-title">Recent Orders</h3>
+        <a routerLink="/orders" class="btn btn-ghost btn-sm">View All →</a>
+      </div>
+      <div class="empty-state" *ngIf="recentOrders.length === 0">
+        <div class="empty-icon"><app-icon name="orders" [size]="40"></app-icon></div>
+        <p>No orders yet. Create your first order to get started!</p>
+        <button class="btn btn-primary btn-sm mt-4" routerLink="/orders/new">Create Order</button>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card animate-fade-in" style="animation-delay: 600ms">
+      <div class="card-header">
+        <h3 class="card-title">Quick Actions</h3>
+      </div>
+      <div class="quick-actions">
+        <a class="action-item" routerLink="/orders/new">
+          <div class="action-icon"><app-icon name="plus" [size]="22"></app-icon></div>
+          <span>New Order</span>
+        </a>
+        <a class="action-item" routerLink="/orders/whatsapp">
+          <div class="action-icon"><app-icon name="orders" [size]="22"></app-icon></div>
+          <span>WhatsApp Import</span>
+        </a>
+        <a class="action-item" routerLink="/products">
+          <div class="action-icon"><app-icon name="products" [size]="22"></app-icon></div>
+          <span>Manage Products</span>
+        </a>
+        <a class="action-item" routerLink="/dispatch">
+          <div class="action-icon"><app-icon name="dispatch" [size]="22"></app-icon></div>
+          <span>Dispatch Queue</span>
+        </a>
+        <a class="action-item" routerLink="/billing">
+          <div class="action-icon"><app-icon name="billing" [size]="22"></app-icon></div>
+          <span>Export to Vyapar</span>
+        </a>
+        <a class="action-item" routerLink="/reports">
+          <div class="action-icon"><app-icon name="reports" [size]="22"></app-icon></div>
+          <span>View Reports</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,232 @@
+<div class="order-create-page page-content">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Create Order</h1>
+    <button class="btn btn-ghost" routerLink="/orders">← Back to Orders</button>
+  </div>
+
+  <!-- Error Banner -->
+  <div class="toast toast-error animate-fade-in" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="order-grid">
+    <!-- Left column: main form -->
+    <div class="form-column">
+
+      <!-- Customer Selection -->
+      <div class="form-section card">
+        <h3 class="section-title">Customer *</h3>
+
+        <div *ngIf="selectedCustomer" class="selected-customer">
+          <div class="selected-customer-info">
+            <span class="customer-name">{{ selectedCustomer.name }}</span>
+            <span class="customer-meta">
+              <span *ngIf="selectedCustomer.phone">{{ selectedCustomer.phone }}</span>
+              <span *ngIf="selectedCustomer.city"> · {{ selectedCustomer.city }}</span>
+            </span>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" (click)="clearCustomer()">
+            <app-icon name="close" [size]="14"></app-icon> Change
+          </button>
+        </div>
+
+        <div *ngIf="!selectedCustomer">
+          <div class="search-row">
+            <input type="text" class="form-control" placeholder="Search by name or phone..."
+                   [(ngModel)]="customerQuery" name="customerQuery"
+                   (keyup.enter)="searchCustomers()">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="searchCustomers()"
+                    [disabled]="isSearchingCustomers">
+              {{ isSearchingCustomers ? 'Searching...' : 'Search' }}
+            </button>
+          </div>
+
+          <div class="customer-results" *ngIf="customerResults.length > 0">
+            <div class="customer-result-row" *ngFor="let c of customerResults" (click)="selectCustomer(c)">
+              <div class="customer-cell">
+                <span class="customer-name">{{ c.name }}</span>
+                <span class="customer-phone">
+                  {{ c.phone }}<span *ngIf="c.city"> · {{ c.city }}</span>
+                </span>
+              </div>
+              <button type="button" class="btn btn-ghost btn-sm">Select</button>
+            </div>
+          </div>
+          <p class="text-muted" *ngIf="customerResults.length === 0">No customers found.</p>
+        </div>
+      </div>
+
+      <!-- Line Items -->
+      <div class="form-section card">
+        <div class="section-header">
+          <h3 class="section-title">Line Items *</h3>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="addItem()">
+            <app-icon name="plus" [size]="14"></app-icon> Add Item
+          </button>
+        </div>
+
+        <div class="table-wrapper table-responsive">
+          <table class="data-table items-table">
+            <thead>
+              <tr>
+                <th class="col-product">Product</th>
+                <th class="col-num">Qty</th>
+                <th class="col-num">Unit Price (₹)</th>
+                <th class="col-num">Discount (₹)</th>
+                <th class="col-num">Tax (₹)</th>
+                <th class="col-num">Line Total</th>
+                <th class="col-action"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items; let i = index">
+                <td class="col-product">
+                  <select class="form-control" [(ngModel)]="item.productId" [name]="'product' + i"
+                          (ngModelChange)="onProductChange(item)">
+                    <option [ngValue]="null">Select product...</option>
+                    <option *ngFor="let p of products" [ngValue]="p.id">
+                      {{ p.name }} · {{ p.sku }} (stock: {{ p.stockQuantity }})
+                    </option>
+                  </select>
+                </td>
+                <td class="col-num">
+                  <input type="number" class="form-control" min="1" step="1"
+                         [(ngModel)]="item.quantity" [name]="'qty' + i">
+                </td>
+                <td class="col-num">
+                  <input type="number" class="form-control" min="0" step="0.01"
+                         [(ngModel)]="item.unitPrice" [name]="'price' + i">
+                </td>
+                <td class="col-num">
+                  <input type="number" class="form-control" min="0" step="0.01"
+                         [(ngModel)]="item.discount" [name]="'discount' + i">
+                </td>
+                <td class="col-num">
+                  <input type="number" class="form-control" min="0" step="0.01"
+                         [(ngModel)]="item.taxAmount" [name]="'tax' + i">
+                </td>
+                <td class="col-num line-total">₹{{ lineTotal(item) | number:'1.2-2' }}</td>
+                <td class="col-action">
+                  <button type="button" class="btn btn-ghost btn-sm icon-btn" (click)="removeItem(i)" title="Remove" aria-label="Remove item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="items.length === 0">
+                <td colspan="7" class="text-muted text-center">No items yet. Click "+ Add Item" to begin.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Order Details -->
+      <div class="form-section card">
+        <h3 class="section-title">Order Details</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Payment Mode *</label>
+            <select class="form-control" [(ngModel)]="paymentMode" name="paymentMode">
+              <option value="">Select payment mode</option>
+              <option *ngFor="let m of paymentModes" [value]="m">{{ m }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Payment Status</label>
+            <select class="form-control" [(ngModel)]="paymentStatus" name="paymentStatus">
+              <option *ngFor="let s of paymentStatuses" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Order Date *</label>
+            <input type="date" class="form-control" [(ngModel)]="orderDate" name="orderDate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Salesperson ID</label>
+            <input type="number" class="form-control" placeholder="Optional"
+                   [(ngModel)]="salespersonId" name="salespersonId" min="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Order Discount (₹)</label>
+            <input type="number" class="form-control" min="0" step="0.01"
+                   [(ngModel)]="discountAmount" name="discountAmount">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Order Tax (₹)</label>
+            <input type="number" class="form-control" min="0" step="0.01"
+                   [(ngModel)]="taxAmount" name="orderTaxAmount">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Shipping Charge (₹)</label>
+            <input type="number" class="form-control" min="0" step="0.01"
+                   [(ngModel)]="shippingCharge" name="shippingCharge">
+          </div>
+          <div class="form-group"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control" rows="3" placeholder="Any additional notes..."
+                    [(ngModel)]="notes" name="notes"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: totals + actions -->
+    <div class="summary-column">
+      <div class="form-section card summary-card">
+        <h3 class="section-title">Summary</h3>
+
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span class="font-semibold">₹{{ subtotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Order Discount</span>
+          <span>− ₹{{ (discountAmount || 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Order Tax</span>
+          <span>+ ₹{{ (taxAmount || 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Shipping</span>
+          <span>+ ₹{{ (shippingCharge || 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="summary-row grand-total">
+          <span>Grand Total</span>
+          <span>₹{{ grandTotal | number:'1.2-2' }}</span>
+        </div>
+
+        <!-- Validation hints -->
+        <div class="validation-hints" *ngIf="!isValid">
+          <p class="hint" *ngIf="!selectedCustomer">• Select a customer</p>
+          <p class="hint" *ngIf="validItems.length === 0">• Add at least one item with a product and quantity</p>
+          <p class="hint" *ngIf="!paymentMode">• Choose a payment mode</p>
+        </div>
+
+        <div class="summary-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+          <button type="button" class="btn btn-primary btn-lg" (click)="submit()"
+                  [disabled]="!isValid || isSubmitting">
+            <span class="spinner" *ngIf="isSubmitting"></span>
+            {{ isSubmitting ? 'Creating...' : 'Create Order' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

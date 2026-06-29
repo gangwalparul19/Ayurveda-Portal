@@ -1,0 +1,240 @@
+<!-- ============================================================
+     Checkout – Luxury Ayurveda aesthetic
+     ============================================================ -->
+<div class="checkout-page">
+
+  <!-- ── Order Success ──────────────────────────────────────── -->
+  <div *ngIf="orderPlaced" class="order-success">
+    <div class="success-icon">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <h1>Order Placed Successfully!</h1>
+    <p class="order-number">Order #{{ orderId }}</p>
+    <p class="success-message">
+      Thank you for your order.
+      <ng-container *ngIf="orderPaymentMethod === 'COD'">
+        We will contact you shortly to confirm your delivery details. Payment to be made on delivery.
+      </ng-container>
+      <ng-container *ngIf="orderPaymentMethod === 'ONLINE'">
+        Your payment was received. We will dispatch your order soon.
+      </ng-container>
+    </p>
+    <div class="payment-method-badge" [class.badge-online]="orderPaymentMethod === 'ONLINE'" [class.badge-cod]="orderPaymentMethod === 'COD'">
+      <ng-container *ngIf="orderPaymentMethod === 'COD'">💵 Cash on Delivery</ng-container>
+      <ng-container *ngIf="orderPaymentMethod === 'ONLINE'">✅ Paid Online (Razorpay)</ng-container>
+    </div>
+    <div class="success-actions">
+      <button class="btn btn-primary btn-lg" (click)="continueShopping()">Continue Shopping</button>
+    </div>
+  </div>
+
+  <!-- ── Checkout Form ──────────────────────────────────────── -->
+  <div *ngIf="!orderPlaced" class="checkout-content">
+
+    <div class="checkout-header">
+      <button class="back-btn" (click)="goToCart()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Cart
+      </button>
+      <h1>Checkout</h1>
+    </div>
+
+    <div class="checkout-grid">
+
+      <!-- Delivery Form -->
+      <div class="delivery-card card">
+        <h2>Delivery Information</h2>
+
+        <form>
+          <div class="form-group">
+            <label class="form-label" for="name">
+              Full Name <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-control" type="text" id="name"
+                   [(ngModel)]="customerData.name" name="name"
+                   placeholder="Enter your full name" required autocomplete="name">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="phone">
+                Phone Number <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input class="form-control" type="tel" id="phone"
+                     [(ngModel)]="customerData.phone" name="phone"
+                     placeholder="10-digit mobile number" required autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="email">Email <span class="optional">(optional)</span></label>
+              <input class="form-control" type="email" id="email"
+                     [(ngModel)]="customerData.email" name="email"
+                     placeholder="your@email.com" autocomplete="email">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="addressLine1">
+              Address Line 1 <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input class="form-control" type="text" id="addressLine1"
+                   [(ngModel)]="customerData.addressLine1" name="addressLine1"
+                   placeholder="House No., Street Name" required autocomplete="address-line1">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="addressLine2">
+              Address Line 2 <span class="optional">(optional)</span>
+            </label>
+            <input class="form-control" type="text" id="addressLine2"
+                   [(ngModel)]="customerData.addressLine2" name="addressLine2"
+                   placeholder="Landmark, Area" autocomplete="address-line2">
+          </div>
+
+          <div class="form-row form-row-3">
+            <div class="form-group">
+              <label class="form-label" for="city">
+                City <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input class="form-control" type="text" id="city"
+                     [(ngModel)]="customerData.city" name="city"
+                     placeholder="City" required autocomplete="address-level2">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="state">
+                State <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input class="form-control" type="text" id="state"
+                     [(ngModel)]="customerData.state" name="state"
+                     placeholder="State" required autocomplete="address-level1">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pincode">
+                Pincode <span class="required" aria-hidden="true">*</span>
+              </label>
+              <input class="form-control" type="text" id="pincode"
+                     [(ngModel)]="customerData.pincode" name="pincode"
+                     placeholder="6-digit PIN" required autocomplete="postal-code" maxlength="6">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="notes">
+              Special Instructions <span class="optional">(optional)</span>
+            </label>
+            <textarea class="form-control" id="notes"
+                      [(ngModel)]="customerData.notes" name="notes"
+                      rows="3" placeholder="Any special delivery instructions"></textarea>
+          </div>
+        </form>
+      </div>
+
+      <!-- Order Summary -->
+      <aside class="order-summary-section">
+        <div class="order-summary card">
+          <h2>Order Summary</h2>
+
+          <div class="summary-items">
+            <div class="summary-item" *ngFor="let item of cartItems">
+              <span class="item-name">{{ item.product.name }} <span class="item-qty">× {{ item.quantity }}</span></span>
+              <span class="item-price">₹{{ item.product.price * item.quantity }}</span>
+            </div>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <!-- Coupon Section -->
+          <div class="coupon-section">
+            <div *ngIf="!couponApplied" class="coupon-input-row">
+              <input class="form-control coupon-input" type="text"
+                     [(ngModel)]="couponCode" name="couponCode"
+                     placeholder="Enter coupon code" [disabled]="couponLoading">
+              <button class="btn btn-secondary apply-btn" (click)="applyCoupon()" [disabled]="couponLoading">
+                {{ couponLoading ? '...' : 'Apply' }}
+              </button>
+            </div>
+            <div *ngIf="couponError" class="coupon-error">{{ couponError }}</div>
+            <div *ngIf="couponApplied" class="coupon-applied">
+              <span>✓ {{ couponCode | uppercase }} applied</span>
+              <button class="remove-coupon" (click)="removeCoupon()">Remove</button>
+            </div>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row">
+            <span>Subtotal ({{ getTotalItems() }} items)</span>
+            <span>₹{{ getSubtotal() }}</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span *ngIf="getShipping() === 0" class="free-shipping">FREE</span>
+            <span *ngIf="getShipping() > 0">₹{{ getShipping() }}</span>
+          </div>
+
+          <div class="summary-row discount-row" *ngIf="couponDiscount > 0">
+            <span>Discount</span>
+            <span class="discount-value">−₹{{ couponDiscount }}</span>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row total-row">
+            <span>Total</span>
+            <span class="total-amount">₹{{ getTotal() }}</span>
+          </div>
+
+          <!-- Payment Method Selector -->
+          <div class="payment-options">
+            <label class="payment-option" [class.selected]="paymentMethod === 'COD'">
+              <input type="radio" name="payMethod" value="COD" [(ngModel)]="paymentMethod">
+              <span class="payment-option-content">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8l-2 4h12l-2-4z"/>
+                </svg>
+                Cash on Delivery
+              </span>
+            </label>
+            <label class="payment-option" [class.selected]="paymentMethod === 'ONLINE'">
+              <input type="radio" name="payMethod" value="ONLINE" [(ngModel)]="paymentMethod">
+              <span class="payment-option-content">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                Pay Online (Razorpay)
+              </span>
+            </label>
+          </div>
+
+          <button class="btn btn-primary btn-place" (click)="placeOrder()" [disabled]="submitting || !validateForm()">
+            <ng-container *ngIf="!submitting">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              {{ paymentMethod === 'ONLINE' ? 'Pay Now' : 'Place Order' }}
+            </ng-container>
+            <ng-container *ngIf="submitting">
+              <span class="spinner"></span>
+              Processing…
+            </ng-container>
+          </button>
+
+          <div class="payment-meta">
+            <div class="payment-row secure">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Secure Checkout
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</div>

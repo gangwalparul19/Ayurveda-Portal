@@ -1,0 +1,361 @@
+<div class="reports-page page-content">
+  <div class="page-header">
+    <h1 class="title-with-icon"><app-icon name="reports" [size]="22"></app-icon> Reports & Analytics</h1>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'daily'" (click)="switchTab('daily')">Daily</button>
+    <button class="tab" [class.active]="activeTab === 'monthly'" (click)="switchTab('monthly')">Monthly</button>
+    <button class="tab" [class.active]="activeTab === 'salesperson'" (click)="switchTab('salesperson')">Salesperson</button>
+    <button class="tab" [class.active]="activeTab === 'products'" (click)="switchTab('products')">Top Products</button>
+    <button class="tab" [class.active]="activeTab === 'customers'" (click)="switchTab('customers')">Customers</button>
+  </div>
+
+  <!-- ===== DAILY REPORT ===== -->
+  <div class="tab-content animate-fade-in" *ngIf="activeTab === 'daily'">
+    <div class="date-picker-row card">
+      <label class="form-label">Select Date</label>
+      <input type="date" class="form-control date-input" [(ngModel)]="dailyDate" (change)="loadDailyReport()">
+    </div>
+
+    <div class="loading-state" *ngIf="isDailyLoading"><div class="spinner spinner-lg"></div></div>
+
+    <div *ngIf="!isDailyLoading && dailyReport" class="animate-fade-in">
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card card">
+          <span class="summary-icon"><app-icon name="orders" [size]="26"></app-icon></span>
+          <div class="summary-data">
+            <span class="summary-value">{{ dailyReport.orderCount }}</span>
+            <span class="summary-label">Orders</span>
+          </div>
+        </div>
+        <div class="summary-card card">
+          <span class="summary-icon"><app-icon name="billing" [size]="26"></app-icon></span>
+          <div class="summary-data">
+            <span class="summary-value">₹{{ dailyReport.totalRevenue | number:'1.0-0' }}</span>
+            <span class="summary-label">Revenue</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Cards -->
+      <div class="breakdown-grid">
+        <div class="card breakdown-card">
+          <h4 class="breakdown-title">By Status</h4>
+          <div class="breakdown-rows">
+            <div class="breakdown-row" *ngFor="let entry of getStatusEntries(dailyReport.byStatus)">
+              <span class="badge badge-{{ entry.key.toLowerCase() }}">{{ entry.key }}</span>
+              <span class="breakdown-count">{{ entry.value }}</span>
+              <div class="breakdown-bar">
+                <div class="breakdown-fill" [style.width.%]="dailyReport.orderCount > 0 ? (entry.value / dailyReport.orderCount * 100) : 0"></div>
+              </div>
+            </div>
+            <p class="text-muted" *ngIf="getStatusEntries(dailyReport.byStatus).length === 0">No data</p>
+          </div>
+        </div>
+
+        <div class="card breakdown-card">
+          <h4 class="breakdown-title">By Payment Mode</h4>
+          <div class="breakdown-rows">
+            <div class="breakdown-row" *ngFor="let entry of getStatusEntries(dailyReport.byPaymentMode)">
+              <span class="payment-label">{{ entry.key }}</span>
+              <span class="breakdown-count">{{ entry.value }}</span>
+              <div class="breakdown-bar">
+                <div class="breakdown-fill fill-accent" [style.width.%]="dailyReport.orderCount > 0 ? (entry.value / dailyReport.orderCount * 100) : 0"></div>
+              </div>
+            </div>
+            <p class="text-muted" *ngIf="getStatusEntries(dailyReport.byPaymentMode).length === 0">No data</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MONTHLY REPORT ===== -->
+  <div class="tab-content animate-fade-in" *ngIf="activeTab === 'monthly'">
+    <div class="date-picker-row card">
+      <div class="month-picker">
+        <div class="form-group">
+          <label class="form-label">Month</label>
+          <select class="form-control" [(ngModel)]="selectedMonth" (change)="loadMonthlyReport()">
+            <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Year</label>
+          <select class="form-control" [(ngModel)]="selectedYear" (change)="loadMonthlyReport()">
+            <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isMonthlyLoading"><div class="spinner spinner-lg"></div></div>
+
+    <div *ngIf="!isMonthlyLoading && monthlyReport" class="animate-fade-in">
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card card">
+          <span class="summary-icon"><app-icon name="orders" [size]="26"></app-icon></span>
+          <div class="summary-data">
+            <span class="summary-value">{{ monthlyReport.totalOrders }}</span>
+            <span class="summary-label">Total Orders</span>
+          </div>
+        </div>
+        <div class="summary-card card">
+          <span class="summary-icon"><app-icon name="billing" [size]="26"></app-icon></span>
+          <div class="summary-data">
+            <span class="summary-value">₹{{ monthlyReport.totalRevenue | number:'1.0-0' }}</span>
+            <span class="summary-label">Total Revenue</span>
+          </div>
+        </div>
+        <div class="summary-card card" *ngIf="monthlyReport.totalOrders > 0">
+          <span class="summary-icon"><app-icon name="reports" [size]="26"></app-icon></span>
+          <div class="summary-data">
+            <span class="summary-value">₹{{ (monthlyReport.totalRevenue / monthlyReport.totalOrders) | number:'1.0-0' }}</span>
+            <span class="summary-label">Avg. Order Value</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Bar Chart -->
+      <div class="card chart-card" *ngIf="getDailyBreakdownEntries().length > 0">
+        <h4 class="breakdown-title">Daily Orders</h4>
+        <div class="bar-chart">
+          <div class="bar-container" *ngFor="let entry of getDailyBreakdownEntries()">
+            <div class="bar-value">{{ entry.count }}</div>
+            <div class="bar" [style.height.%]="getBarHeight(entry.count)">
+              <div class="bar-fill"></div>
+            </div>
+            <div class="bar-label">{{ getDayLabel(entry.date) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div class="empty-state card" *ngIf="getDailyBreakdownEntries().length === 0">
+        <p class="text-muted">No order data for this month.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SALESPERSON PERFORMANCE ===== -->
+  <div class="tab-content animate-fade-in" *ngIf="activeTab === 'salesperson'">
+    <div class="date-picker-row card">
+      <div class="date-range-picker">
+        <div class="form-group">
+          <label class="form-label">From Date</label>
+          <input type="date" class="form-control" [(ngModel)]="salespersonStartDate" (change)="loadSalespersonPerformance()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">To Date</label>
+          <input type="date" class="form-control" [(ngModel)]="salespersonEndDate" (change)="loadSalespersonPerformance()">
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isSalespersonLoading"><div class="spinner spinner-lg"></div></div>
+
+    <div *ngIf="!isSalespersonLoading && salespersonPerformance.length > 0" class="animate-fade-in">
+      <div class="card">
+        <h4 class="breakdown-title">Salesperson Performance Ranking</h4>
+        <div class="performance-list">
+          <div class="performance-item" *ngFor="let sp of salespersonPerformance; let i = index">
+            <div class="performance-rank">
+              <span class="rank-number" [class.rank-gold]="i === 0" [class.rank-silver]="i === 1" [class.rank-bronze]="i === 2">
+                #{{ i + 1 }}
+              </span>
+            </div>
+            <div class="performance-details">
+              <div class="performance-header">
+                <span class="performance-name">Salesperson #{{ sp.salespersonId }}</span>
+                <span class="performance-revenue">₹{{ sp.totalRevenue | number:'1.0-0' }}</span>
+              </div>
+              <div class="performance-bar">
+                <div class="performance-fill" [style.width.%]="getSalespersonBarWidth(sp.totalRevenue)"></div>
+              </div>
+              <div class="performance-metrics">
+                <span class="metric">
+                  <span class="metric-label">Orders:</span>
+                  <span class="metric-value">{{ sp.totalOrders }}</span>
+                </span>
+                <span class="metric">
+                  <span class="metric-label">Avg Order:</span>
+                  <span class="metric-value">₹{{ sp.averageOrderValue | number:'1.0-0' }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state card" *ngIf="!isSalespersonLoading && salespersonPerformance.length === 0">
+      <p class="text-muted">No salesperson data for this date range.</p>
+    </div>
+  </div>
+
+  <!-- ===== TOP PRODUCTS ===== -->
+  <div class="tab-content animate-fade-in" *ngIf="activeTab === 'products'">
+    <div class="date-picker-row card">
+      <div class="date-range-picker">
+        <div class="form-group">
+          <label class="form-label">From Date</label>
+          <input type="date" class="form-control" [(ngModel)]="productsStartDate" (change)="loadTopProducts()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">To Date</label>
+          <input type="date" class="form-control" [(ngModel)]="productsEndDate" (change)="loadTopProducts()">
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isProductsLoading"><div class="spinner spinner-lg"></div></div>
+
+    <div *ngIf="!isProductsLoading && topProductsData" class="animate-fade-in">
+      <div class="breakdown-grid">
+        <!-- Top by Revenue -->
+        <div class="card breakdown-card">
+          <h4 class="breakdown-title"><app-icon name="billing" [size]="16"></app-icon> Top by Revenue</h4>
+          <div class="product-list">
+            <div class="product-item" *ngFor="let product of topProductsData.topByRevenue; let i = index">
+              <div class="product-rank">{{ i + 1 }}</div>
+              <div class="product-details">
+                <div class="product-name">{{ product.productName }}</div>
+                <div class="product-sku">SKU: {{ product.sku }}</div>
+                <div class="product-metrics">
+                  <span class="product-revenue">₹{{ product.revenue | number:'1.0-0' }}</span>
+                  <span class="product-qty">Qty: {{ product.quantitySold }}</span>
+                </div>
+                <div class="product-bar">
+                  <div class="product-fill" [style.width.%]="getProductRevenueWidth(product.revenue)"></div>
+                </div>
+              </div>
+            </div>
+            <p class="text-muted" *ngIf="topProductsData.topByRevenue.length === 0">No data</p>
+          </div>
+        </div>
+
+        <!-- Top by Quantity -->
+        <div class="card breakdown-card">
+          <h4 class="breakdown-title"><app-icon name="products" [size]="16"></app-icon> Top by Quantity Sold</h4>
+          <div class="product-list">
+            <div class="product-item" *ngFor="let product of topProductsData.topByQuantity; let i = index">
+              <div class="product-rank">{{ i + 1 }}</div>
+              <div class="product-details">
+                <div class="product-name">{{ product.productName }}</div>
+                <div class="product-sku">SKU: {{ product.sku }}</div>
+                <div class="product-metrics">
+                  <span class="product-qty">Qty: {{ product.quantitySold }}</span>
+                  <span class="product-revenue">₹{{ product.revenue | number:'1.0-0' }}</span>
+                </div>
+                <div class="product-bar">
+                  <div class="product-fill fill-accent" [style.width.%]="getProductQuantityWidth(product.quantitySold)"></div>
+                </div>
+              </div>
+            </div>
+            <p class="text-muted" *ngIf="topProductsData.topByQuantity.length === 0">No data</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1rem;">
+        <div class="summary-grid">
+          <div class="summary-card">
+            <span class="summary-icon"><app-icon name="reports" [size]="26"></app-icon></span>
+            <div class="summary-data">
+              <span class="summary-value">{{ topProductsData.totalProducts }}</span>
+              <span class="summary-label">Total Products Sold</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CUSTOMER ANALYTICS ===== -->
+  <div class="tab-content animate-fade-in" *ngIf="activeTab === 'customers'">
+    <div class="date-picker-row card">
+      <div class="date-range-picker">
+        <div class="form-group">
+          <label class="form-label">From Date</label>
+          <input type="date" class="form-control" [(ngModel)]="customersStartDate" (change)="loadCustomerAnalytics()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">To Date</label>
+          <input type="date" class="form-control" [(ngModel)]="customersEndDate" (change)="loadCustomerAnalytics()">
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isCustomersLoading"><div class="spinner spinner-lg"></div></div>
+
+    <div *ngIf="!isCustomersLoading && customerAnalytics" class="animate-fade-in">
+      <div class="summary-grid">
+        <div class="summary-card card">
+          <span class="summary-icon"><app-icon name="customers" [size]="26"></app-icon></span>
+          <div class="summary-data">
+            <span class="summary-value">{{ customerAnalytics.uniqueCustomers }}</span>
+            <span class="summary-label">Unique Customers</span>
+          </div>
+        </div>
+        <div class="summary-card card">
+          <span class="summary-icon"><app-icon name="plus" [size]="26"></app-icon></span>
+          <div class="summary-data">
+            <span class="summary-value">{{ customerAnalytics.newCustomers }}</span>
+            <span class="summary-label">New Customers</span>
+          </div>
+        </div>
+        <div class="summary-card card">
+          <span class="summary-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </span>
+          <div class="summary-data">
+            <span class="summary-value">{{ customerAnalytics.returningCustomers }}</span>
+            <span class="summary-label">Returning Customers</span>
+          </div>
+        </div>
+        <div class="summary-card card">
+          <span class="summary-icon"><app-icon name="billing" [size]="26"></app-icon></span>
+          <div class="summary-data">
+            <span class="summary-value">₹{{ customerAnalytics.averageOrderValue | number:'1.0-0' }}</span>
+            <span class="summary-label">Avg Order Value</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <h4 class="breakdown-title">Customer Distribution</h4>
+        <div class="customer-chart">
+          <div class="customer-bar-container">
+            <div class="customer-segment customer-new" 
+                 [style.width.%]="getCustomerPercentage(customerAnalytics.newCustomers, customerAnalytics.uniqueCustomers)"
+                 *ngIf="customerAnalytics.newCustomers > 0">
+              <span class="segment-label">New: {{ customerAnalytics.newCustomers }}</span>
+            </div>
+            <div class="customer-segment customer-returning" 
+                 [style.width.%]="getCustomerPercentage(customerAnalytics.returningCustomers, customerAnalytics.uniqueCustomers)"
+                 *ngIf="customerAnalytics.returningCustomers > 0">
+              <span class="segment-label">Returning: {{ customerAnalytics.returningCustomers }}</span>
+            </div>
+          </div>
+          <div class="customer-legend">
+            <div class="legend-item">
+              <span class="legend-color legend-new"></span>
+              <span>New Customers ({{ getCustomerPercentage(customerAnalytics.newCustomers, customerAnalytics.uniqueCustomers) | number:'1.0-0' }}%)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color legend-returning"></span>
+              <span>Returning Customers ({{ getCustomerPercentage(customerAnalytics.returningCustomers, customerAnalytics.uniqueCustomers) | number:'1.0-0' }}%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

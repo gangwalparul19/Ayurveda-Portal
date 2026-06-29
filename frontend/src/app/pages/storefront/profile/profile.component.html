@@ -1,0 +1,161 @@
+<!-- ── Storefront Header ───────────────────────────────────── -->
+<header class="storefront-header">
+  <div class="container">
+    <div class="header-content">
+      <a class="logo" routerLink="/store">
+        <img src="/images/shifa/logo.png" alt="Shifa Ayurveda" class="header-logo"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+        <span class="logo-text">Shifa</span>
+      </a>
+      <nav class="main-nav">
+        <a routerLink="/store">Home</a>
+        <a routerLink="/store/products">Products</a>
+        <a routerLink="/store/wishlist">Wishlist</a>
+        <a routerLink="/store/profile" class="active">Profile</a>
+        <a routerLink="/store/orders">My Orders</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" routerLink="/store/cart" aria-label="Cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Profile Page ──────────────────────────────────────── -->
+<div class="profile-container">
+  <div class="container">
+
+    <!-- User Hero -->
+    <div class="profile-hero">
+      <div class="profile-avatar">{{ getInitials() }}</div>
+      <div class="profile-hero-info">
+        <h1 class="profile-name">{{ user?.fullName }}</h1>
+        <p class="profile-email">{{ user?.email }}</p>
+      </div>
+      <div class="profile-hero-actions">
+        <a routerLink="/store/orders" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          My Orders
+        </a>
+        <button class="btn btn-ghost" (click)="logout()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign Out
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="profile-tabs">
+      <button class="tab-btn" [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+        Edit Profile
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'password'" (click)="activeTab = 'password'">
+        Change Password
+      </button>
+    </div>
+
+    <!-- Edit Profile Tab -->
+    <div class="profile-card" *ngIf="activeTab === 'profile'">
+      <div class="sf-alert-success" *ngIf="profileSuccess">{{ profileSuccess }}</div>
+      <div class="sf-alert-error" *ngIf="profileError">{{ profileError }}</div>
+
+      <form (ngSubmit)="saveProfile()" novalidate>
+        <div class="form-grid">
+          <div class="sf-field">
+            <label class="form-label" for="p-fullname">Full Name</label>
+            <input id="p-fullname" type="text" class="form-control"
+                   [(ngModel)]="fullName" name="fullName" [disabled]="profileLoading">
+          </div>
+          <div class="sf-field">
+            <label class="form-label" for="p-phone">Phone</label>
+            <input id="p-phone" type="tel" class="form-control"
+                   [(ngModel)]="phone" name="phone" [disabled]="profileLoading">
+          </div>
+          <div class="sf-field sf-field--full">
+            <label class="form-label" for="p-address">Street Address</label>
+            <input id="p-address" type="text" class="form-control"
+                   [(ngModel)]="address" name="address" [disabled]="profileLoading">
+          </div>
+          <div class="sf-field">
+            <label class="form-label" for="p-city">City</label>
+            <input id="p-city" type="text" class="form-control"
+                   [(ngModel)]="city" name="city" [disabled]="profileLoading">
+          </div>
+          <div class="sf-field">
+            <label class="form-label" for="p-state">State</label>
+            <input id="p-state" type="text" class="form-control"
+                   [(ngModel)]="state" name="state" [disabled]="profileLoading">
+          </div>
+          <div class="sf-field">
+            <label class="form-label" for="p-pincode">PIN Code</label>
+            <input id="p-pincode" type="text" class="form-control"
+                   [(ngModel)]="pincode" name="pincode" [disabled]="profileLoading">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="profileLoading">
+            <span class="spinner" *ngIf="profileLoading"></span>
+            <span *ngIf="!profileLoading">Save Changes</span>
+            <span *ngIf="profileLoading">Saving…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Change Password Tab -->
+    <div class="profile-card" *ngIf="activeTab === 'password'">
+      <div class="sf-alert-success" *ngIf="passwordSuccess">{{ passwordSuccess }}</div>
+      <div class="sf-alert-error" *ngIf="passwordError">{{ passwordError }}</div>
+
+      <form (ngSubmit)="changePassword()" novalidate>
+        <div class="form-grid form-grid--narrow">
+          <div class="sf-field sf-field--full">
+            <label class="form-label" for="pw-current">Current Password</label>
+            <input id="pw-current" type="password" class="form-control"
+                   [(ngModel)]="currentPassword" name="currentPassword" [disabled]="passwordLoading">
+          </div>
+          <div class="sf-field sf-field--full">
+            <label class="form-label" for="pw-new">New Password</label>
+            <input id="pw-new" type="password" class="form-control"
+                   [(ngModel)]="newPassword" name="newPassword" [disabled]="passwordLoading">
+          </div>
+          <div class="sf-field sf-field--full">
+            <label class="form-label" for="pw-confirm">Confirm New Password</label>
+            <input id="pw-confirm" type="password" class="form-control"
+                   [(ngModel)]="confirmPassword" name="confirmPassword" [disabled]="passwordLoading">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="passwordLoading">
+            <span class="spinner" *ngIf="passwordLoading"></span>
+            <span *ngIf="!passwordLoading">Update Password</span>
+            <span *ngIf="passwordLoading">Updating…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Footer ───────────────────────────────────────────────── -->
+<footer class="storefront-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2026 Shifa Ayurveda. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,95 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Reviews</h1>
+    <p class="page-subtitle">Moderate customer product reviews</p>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+  <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <!-- Card -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Pending Reviews</h2>
+      <span class="badge badge-neutral" *ngIf="!loading">{{ totalElements }} pending</span>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-block" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Loading reviews…</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" *ngIf="!loading && reviews.length === 0">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+      <p>No pending reviews at the moment.</p>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper" *ngIf="!loading && reviews.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Reviewer</th>
+            <th>Product</th>
+            <th>Rating</th>
+            <th>Review</th>
+            <th>Date</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let review of reviews">
+            <td>
+              <span class="reviewer-name">{{ review.reviewerName }}</span>
+            </td>
+            <td>
+              <span class="product-name">{{ review.productName || ('Product #' + review.productId) }}</span>
+            </td>
+            <td>
+              <div class="rating-stars">
+                <span *ngFor="let s of [1,2,3,4,5]" class="star" [class.filled]="s <= review.rating">★</span>
+              </div>
+            </td>
+            <td class="review-excerpt">
+              <p *ngIf="review.title" class="review-title-cell">{{ review.title }}</p>
+              <p class="review-text-cell">{{ (review.reviewText || '') | slice:0:100 }}{{ (review.reviewText || '').length > 100 ? '…' : '' }}</p>
+            </td>
+            <td class="date-cell">{{ formatDate(review.createdAt || review.date) }}</td>
+            <td class="actions-cell">
+              <button class="btn btn-sm btn-success"
+                      [disabled]="actionInProgress === getReviewId(review)"
+                      (click)="approveReview(getReviewId(review))">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Approve
+              </button>
+              <button class="btn btn-sm btn-danger"
+                      [disabled]="actionInProgress === getReviewId(review)"
+                      (click)="deleteReview(getReviewId(review))">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && totalPages > 1">
+      <button class="page-btn" [disabled]="currentPage === 0" (click)="goToPage(currentPage - 1)">← Prev</button>
+      <button class="page-btn" *ngFor="let p of pages" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p + 1 }}</button>
+      <button class="page-btn" [disabled]="currentPage === totalPages - 1" (click)="goToPage(currentPage + 1)">Next →</button>
+    </div>
+  </div>
+</div>

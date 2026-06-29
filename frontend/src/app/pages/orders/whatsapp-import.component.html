@@ -1,0 +1,153 @@
+<div class="whatsapp-page page-content">
+  <div class="page-header">
+    <h1>WhatsApp Order Import</h1>
+    <button class="btn btn-ghost" routerLink="/orders">← Back to Orders</button>
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="steps-bar">
+    <div class="step" [class.active]="currentStep >= 1" [class.done]="currentStep > 1">
+      <span class="step-num">1</span>
+      <span class="step-label">Paste Text</span>
+    </div>
+    <div class="step-line" [class.active]="currentStep > 1"></div>
+    <div class="step" [class.active]="currentStep >= 2" [class.done]="currentStep > 2">
+      <span class="step-num">2</span>
+      <span class="step-label">Review & Match</span>
+    </div>
+    <div class="step-line" [class.active]="currentStep > 2"></div>
+    <div class="step" [class.active]="currentStep >= 3">
+      <span class="step-num">3</span>
+      <span class="step-label">Confirm</span>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="toast toast-error animate-fade-in" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <!-- Step 1: Paste WhatsApp Text -->
+  <div class="step-content card animate-fade-in" *ngIf="currentStep === 1">
+    <h3 class="section-title">Paste WhatsApp Message</h3>
+    <p class="text-muted mb-4">
+      Paste the customer's WhatsApp message below. The parser will extract product names, quantities, and customer info.
+    </p>
+    <div class="form-group">
+      <textarea class="form-control whatsapp-textarea" [(ngModel)]="rawText"
+                placeholder="Example:&#10;Hi, I need:&#10;2 x Ashwagandha Churna 100gm&#10;1 x Triphala Tablets&#10;3 x Brahmi Oil 200ml&#10;&#10;Name: Rajesh Kumar&#10;Phone: 9876543210&#10;Address: 45, MG Road, Jaipur 302001"
+                rows="12"></textarea>
+    </div>
+    <div class="step-actions">
+      <button class="btn btn-primary btn-lg" (click)="parseText()" [disabled]="isParsing || !rawText.trim()">
+        <span class="spinner" *ngIf="isParsing"></span>
+        {{ isParsing ? 'Parsing...' : 'Parse Message →' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Review Parsed Data -->
+  <div class="step-content animate-fade-in" *ngIf="currentStep === 2 && parsedOrder">
+    <!-- Customer Info -->
+    <div class="card mb-6" *ngIf="parsedOrder.customer">
+      <h3 class="section-title"><app-icon name="customers" [size]="18"></app-icon> Customer Information</h3>
+      <div class="customer-grid">
+        <div class="info-item" *ngIf="parsedOrder.customer.name">
+          <span class="info-label">Name</span>
+          <span class="info-value">{{ parsedOrder.customer.name }}</span>
+        </div>
+        <div class="info-item" *ngIf="parsedOrder.customer.phone">
+          <span class="info-label">Phone</span>
+          <span class="info-value">{{ parsedOrder.customer.phone }}</span>
+        </div>
+        <div class="info-item wide" *ngIf="parsedOrder.customer.address">
+          <span class="info-label">Address</span>
+          <span class="info-value">{{ parsedOrder.customer.address }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warnings -->
+    <div class="warnings card" *ngIf="parsedOrder.warnings && parsedOrder.warnings.length > 0">
+      <div class="warning-item" *ngFor="let w of parsedOrder.warnings">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        {{ w }}
+      </div>
+    </div>
+
+    <!-- Parsed Items -->
+    <div class="card">
+      <h3 class="section-title"><app-icon name="products" [size]="18"></app-icon> Parsed Items ({{ parsedOrder.items.length }})</h3>
+      <div class="parsed-items">
+        <div class="parsed-item" *ngFor="let item of parsedOrder.items; let i = index">
+          <div class="item-header">
+            <span class="item-qty">× {{ item.quantity }}</span>
+            <span class="item-text">{{ item.rawText }}</span>
+          </div>
+
+          <!-- Product Match -->
+          <div class="match-section">
+            <label class="form-label">Match to product:</label>
+            <div class="match-options" *ngIf="getMatchedProducts(i).length > 0">
+              <button *ngFor="let p of getMatchedProducts(i)"
+                      class="match-btn"
+                      [class.selected]="getSelectedProductId(i) === p.id"
+                      (click)="selectProduct(i, p.id)">
+                <span class="match-name">{{ p.name }}</span>
+                <span class="match-price">₹{{ p.salePrice }}</span>
+                <span class="match-sku">{{ p.sku }}</span>
+              </button>
+            </div>
+            <div class="no-match" *ngIf="getMatchedProducts(i).length === 0">
+              <span class="text-muted">No matching products found. You may need to add this product first.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+      <button class="btn btn-primary btn-lg" (click)="goToConfirm()" [disabled]="selectedProducts.size === 0">
+        Confirm Order →
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Confirm -->
+  <div class="step-content card animate-fade-in" *ngIf="currentStep === 3 && parsedOrder">
+    <h3 class="section-title"><app-icon name="orders" [size]="18"></app-icon> Confirm Order Creation</h3>
+
+    <div class="confirm-summary">
+      <div class="summary-row" *ngIf="parsedOrder.customer?.name">
+        <span class="summary-label">Customer</span>
+        <span>{{ parsedOrder.customer.name }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Source</span>
+        <span class="source-badge source-whatsapp">WHATSAPP</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Items</span>
+        <span>{{ selectedProducts.size }} product(s)</span>
+      </div>
+    </div>
+
+    <div class="confirm-items">
+      <div class="confirm-item" *ngFor="let item of parsedOrder.items; let i = index">
+        <ng-container *ngIf="getSelectedProductId(i) as pid">
+          <span class="confirm-qty">× {{ item.quantity }}</span>
+          <span class="confirm-name">{{ item.rawText }}</span>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+      <button class="btn btn-primary btn-lg" (click)="createOrder()" [disabled]="isCreating">
+        <span class="spinner" *ngIf="isCreating"></span>
+        {{ isCreating ? 'Creating...' : 'Create Order' }}
+      </button>
+    </div>
+  </div>
+</div>

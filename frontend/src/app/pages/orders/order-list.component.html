@@ -1,0 +1,159 @@
+<div class="orders-page page-content">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Orders</h1>
+    <div class="header-actions">
+      <button class="btn btn-secondary" routerLink="/orders/whatsapp">
+        <app-icon name="orders" [size]="16"></app-icon>
+        WhatsApp Import
+      </button>
+      <button class="btn btn-primary" routerLink="/orders/new">
+        <app-icon name="plus" [size]="16"></app-icon>
+        New Order
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar card">
+    <select class="form-control filter-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+      <option value="">All Statuses</option>
+      <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+    </select>
+    <div class="date-range">
+      <input type="date" class="form-control" [(ngModel)]="dateFrom" (change)="onFilterChange()" placeholder="From">
+      <span class="date-sep">→</span>
+      <input type="date" class="form-control" [(ngModel)]="dateTo" (change)="onFilterChange()" placeholder="To">
+    </div>
+    <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="hasActiveFilters">
+      <app-icon name="close" [size]="14"></app-icon> Clear
+    </button>
+    <span class="results-count">{{ totalElements }} order(s)</span>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner spinner-lg"></div>
+    <p>Loading orders...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state card" *ngIf="!isLoading && orders.length === 0">
+    <div class="empty-icon"><app-icon name="orders" [size]="44"></app-icon></div>
+    <h3>No orders found</h3>
+    <p>Create your first order or import from WhatsApp.</p>
+    <div class="flex gap-4 mt-4" style="justify-content: center;">
+      <button class="btn btn-primary" routerLink="/orders/new">Create Order</button>
+      <button class="btn btn-secondary" routerLink="/orders/whatsapp">WhatsApp Import</button>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card table-wrapper" *ngIf="!isLoading && orders.length > 0">
+    <div class="table-responsive">
+      <table class="data-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Source</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders" class="animate-fade-in">
+          <td>
+            <a [routerLink]="['/orders', order.id]" class="order-number">{{ order.orderNumber }}</a>
+          </td>
+          <td class="text-muted">{{ order.orderDate }}</td>
+          <td>
+            <div class="customer-cell">
+              <span class="customer-name">{{ order.customer?.name || '—' }}</span>
+              <span class="customer-phone" *ngIf="order.customer?.phone">{{ order.customer.phone }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="source-badge" [ngClass]="'source-' + order.orderSource.toLowerCase()">
+              {{ order.orderSource }}
+            </span>
+          </td>
+          <td class="text-center">{{ order.items?.length || 0 }}</td>
+          <td class="font-semibold">₹{{ order.totalAmount | number:'1.0-0' }}</td>
+          <td>
+            <span [ngClass]="getPaymentClass(order.paymentStatus)">{{ order.paymentStatus }}</span>
+          </td>
+          <td>
+            <span [ngClass]="getStatusClass(order.status)" class="status-clickable"
+                  (click)="openStatusModal(order)"
+                  [title]="'Click to change status'">
+              {{ order.status }}
+            </span>
+          </td>
+          <td>
+            <div class="action-cell">
+              <button class="btn btn-ghost btn-sm icon-btn" [routerLink]="['/orders', order.id]" title="View details" aria-label="View details">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+              <button class="btn btn-ghost btn-sm icon-btn" (click)="openStatusModal(order)" title="Change status" aria-label="Change status">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="btn btn-ghost btn-sm" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0">← Prev</button>
+    <button *ngFor="let page of pageNumbers" class="btn btn-ghost btn-sm page-btn"
+            [class.active]="page === currentPage" (click)="goToPage(page)">{{ page + 1 }}</button>
+    <button class="btn btn-ghost btn-sm" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">Next →</button>
+  </div>
+
+  <!-- Status Change Modal -->
+  <div class="modal-overlay" *ngIf="showStatusModal" (click)="closeStatusModal()">
+    <div class="modal-card glass-panel animate-fade-in" (click)="$event.stopPropagation()">
+      <h3>Update Order Status</h3>
+      <p class="text-muted">Order: <strong>{{ selectedOrder?.orderNumber }}</strong></p>
+      <p class="text-muted mb-4">Current status: <span [ngClass]="getStatusClass(selectedOrder?.status || '')">{{ selectedOrder?.status }}</span></p>
+
+      <div class="form-group">
+        <label class="form-label">New Status</label>
+        <div class="status-options">
+          <button *ngFor="let s of getNextStatuses(selectedOrder?.status || '')"
+                  class="btn btn-sm"
+                  [ngClass]="newStatus === s ? 'btn-primary' : 'btn-secondary'"
+                  (click)="newStatus = s">
+            {{ s }}
+          </button>
+        </div>
+        <p class="text-muted mt-2" *ngIf="getNextStatuses(selectedOrder?.status || '').length === 0">
+          This order cannot be transitioned further.
+        </p>
+      </div>
+
+      <div class="form-group" *ngIf="newStatus">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-control" [(ngModel)]="statusNotes" rows="2" placeholder="Add a note..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeStatusModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="updateStatus()" [disabled]="!newStatus">Update Status</button>
+      </div>
+    </div>
+  </div>
+</div>

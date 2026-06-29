@@ -1,0 +1,131 @@
+<div class="products-page page-content">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Products</h1>
+    <div class="header-actions">
+      <button class="btn btn-secondary" [class.active]="showLowStockOnly" (click)="toggleLowStock()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Low Stock
+      </button>
+      <button class="btn btn-primary" routerLink="/products/new">
+        <app-icon name="plus" [size]="16"></app-icon>
+        Add Product
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Bar -->
+  <div class="filters-bar card">
+    <div class="search-box">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" class="form-control search-input" placeholder="Search by name or SKU..."
+             [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
+    </div>
+    <select class="form-control category-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
+      <option value="">All Categories</option>
+      <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="searchQuery || selectedCategory || showLowStockOnly">
+      <app-icon name="close" [size]="14"></app-icon> Clear
+    </button>
+    <span class="results-count">{{ totalElements }} product(s)</span>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner spinner-lg"></div>
+    <p>Loading products...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state card" *ngIf="!isLoading && products.length === 0">
+    <div class="empty-icon"><app-icon name="products" [size]="44"></app-icon></div>
+    <h3>No products found</h3>
+    <p *ngIf="searchQuery">No results for "{{ searchQuery }}". Try a different search term.</p>
+    <p *ngIf="!searchQuery">Add your first product to get started.</p>
+    <button class="btn btn-primary mt-4" routerLink="/products/new">Add Product</button>
+  </div>
+
+  <!-- Product Grid -->
+  <div class="product-grid" *ngIf="!isLoading && products.length > 0">
+    <div class="product-card card animate-fade-in" *ngFor="let product of products; let i = index"
+         [style.animation-delay]="(i * 40) + 'ms'">
+      <!-- Product Image / Placeholder -->
+      <div class="product-image">
+        <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name">
+        <div class="product-image-placeholder" *ngIf="!product.imageUrl"><app-icon name="products" [size]="40"></app-icon></div>
+        <span class="stock-badge" [ngClass]="getStockClass(product)">
+          {{ product.stockQuantity }} in stock
+        </span>
+      </div>
+
+      <!-- Product Info -->
+      <div class="product-info">
+        <div class="product-category">{{ product.category || 'Uncategorized' }}</div>
+        <h3 class="product-name">{{ product.name }}</h3>
+        <div class="product-sku">SKU: {{ product.sku }}</div>
+
+        <div class="product-pricing">
+          <span class="sale-price">₹{{ product.salePrice | number:'1.0-0' }}</span>
+          <span class="mrp-price" *ngIf="product.mrp > product.salePrice">₹{{ product.mrp | number:'1.0-0' }}</span>
+          <span class="discount-tag" *ngIf="product.mrp > product.salePrice">
+            {{ ((1 - product.salePrice / product.mrp) * 100) | number:'1.0-0' }}% off
+          </span>
+        </div>
+
+        <div class="product-meta">
+          <span *ngIf="product.gstRate > 0">GST: {{ product.gstRate }}%</span>
+          <span *ngIf="product.weightGrams">{{ product.weightGrams }}g</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="product-actions">
+        <button class="btn btn-secondary btn-sm" [routerLink]="['/products', product.id, 'edit']">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Edit
+        </button>
+        <button class="btn btn-ghost btn-sm icon-btn" (click)="confirmDelete(product)" title="Delete" aria-label="Delete product">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1 && !showLowStockOnly && !searchQuery">
+    <button class="btn btn-ghost btn-sm" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0">
+      ← Prev
+    </button>
+    <button *ngFor="let page of pageNumbers"
+            class="btn btn-ghost btn-sm page-btn"
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)">
+      {{ page + 1 }}
+    </button>
+    <button class="btn btn-ghost btn-sm" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">
+      Next →
+    </button>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+    <div class="modal-card glass-panel animate-fade-in" (click)="$event.stopPropagation()">
+      <h3>Delete Product</h3>
+      <p>Are you sure you want to delete <strong>{{ productToDelete?.name }}</strong>?</p>
+      <p class="text-muted">This will soft-delete the product. It won't appear in listings but existing orders will retain the data.</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn-danger" (click)="deleteProduct()">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,109 @@
+<!-- ── Storefront Register ────────────────────────────────── -->
+<div class="sf-auth-wrapper">
+  <div class="sf-auth-card">
+    <!-- Brand -->
+    <div class="sf-auth-brand">
+      <img src="/images/shifa/logo.png" alt="Shifa Ayurveda" class="sf-logo-img"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+      <span class="sf-logo-fallback">Shifa Ayurveda</span>
+      <p class="sf-auth-tagline">Create your account</p>
+    </div>
+
+    <!-- Success -->
+    <div class="sf-alert-success" *ngIf="successMessage">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      {{ successMessage }}
+    </div>
+
+    <!-- Error -->
+    <div class="sf-alert-error" *ngIf="errorMessage">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      {{ errorMessage }}
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="sf-auth-form" novalidate>
+      <div class="sf-field-row">
+        <div class="sf-field">
+          <label class="form-label" for="sf-fullname">Full Name *</label>
+          <input id="sf-fullname" type="text" class="form-control"
+                 placeholder="Your full name"
+                 [(ngModel)]="fullName" name="fullName"
+                 autocomplete="name" [disabled]="isLoading">
+        </div>
+        <div class="sf-field">
+          <label class="form-label" for="sf-phone">Phone</label>
+          <input id="sf-phone" type="tel" class="form-control"
+                 placeholder="+91 99999 99999"
+                 [(ngModel)]="phone" name="phone"
+                 autocomplete="tel" [disabled]="isLoading">
+        </div>
+      </div>
+
+      <div class="sf-field">
+        <label class="form-label" for="sf-email">Email Address *</label>
+        <input id="sf-email" type="email" class="form-control"
+               placeholder="you@example.com"
+               [(ngModel)]="email" name="email"
+               autocomplete="email" [disabled]="isLoading">
+      </div>
+
+      <div class="sf-field">
+        <label class="form-label" for="sf-password">Password *</label>
+        <input id="sf-password" type="password" class="form-control"
+               placeholder="Min 8 characters"
+               [(ngModel)]="password" name="password"
+               autocomplete="new-password" [disabled]="isLoading">
+      </div>
+
+      <div class="sf-section-label">Delivery Address (optional)</div>
+
+      <div class="sf-field">
+        <label class="form-label" for="sf-address">Street Address</label>
+        <input id="sf-address" type="text" class="form-control"
+               placeholder="House / flat number, street"
+               [(ngModel)]="address" name="address" [disabled]="isLoading">
+      </div>
+
+      <div class="sf-field-row">
+        <div class="sf-field">
+          <label class="form-label" for="sf-city">City</label>
+          <input id="sf-city" type="text" class="form-control"
+                 placeholder="City"
+                 [(ngModel)]="city" name="city" [disabled]="isLoading">
+        </div>
+        <div class="sf-field">
+          <label class="form-label" for="sf-state">State</label>
+          <input id="sf-state" type="text" class="form-control"
+                 placeholder="State"
+                 [(ngModel)]="state" name="state" [disabled]="isLoading">
+        </div>
+        <div class="sf-field sf-field--narrow">
+          <label class="form-label" for="sf-pincode">PIN</label>
+          <input id="sf-pincode" type="text" class="form-control"
+                 placeholder="110001"
+                 [(ngModel)]="pincode" name="pincode" [disabled]="isLoading">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary sf-submit-btn" [disabled]="isLoading">
+        <span class="spinner" *ngIf="isLoading"></span>
+        <span *ngIf="!isLoading">Create Account</span>
+        <span *ngIf="isLoading">Creating…</span>
+      </button>
+    </form>
+
+    <p class="sf-auth-switch">
+      Already have an account?
+      <a routerLink="/store/login">Sign in</a>
+    </p>
+
+    <div class="sf-back-link">
+      <a routerLink="/store">← Back to Shop</a>
+    </div>
+  </div>
+</div>

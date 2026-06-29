@@ -1,0 +1,120 @@
+<div class="admin-page page-content">
+  <div class="page-header">
+    <h1>🏢 Tenant Management</h1>
+    <button class="btn btn-primary" (click)="openModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Onboard Tenant
+    </button>
+  </div>
+
+  <div class="toast toast-success animate-fade-in" *ngIf="successMessage">✅ {{ successMessage }}</div>
+
+  <div class="loading-state" *ngIf="isLoading"><div class="spinner spinner-lg"></div></div>
+
+  <!-- Empty -->
+  <div class="empty-state card" *ngIf="!isLoading && tenants.length === 0">
+    <div class="empty-icon">🏢</div>
+    <h3>No tenants yet</h3>
+    <p>Onboard the first tenant to get started.</p>
+    <button class="btn btn-primary mt-4" (click)="openModal()">Onboard Tenant</button>
+  </div>
+
+  <!-- Tenant Grid -->
+  <div class="tenant-grid" *ngIf="!isLoading && tenants.length > 0">
+    <div class="tenant-card card animate-fade-in" *ngFor="let t of tenants; let i = index"
+         [style.animation-delay]="(i * 50) + 'ms'">
+
+      <div class="tenant-brand" [style.background]="'linear-gradient(135deg, #2E7D32, #FF6F00)'">
+        <span class="brand-initial">{{ t.companyName[0] }}</span>
+      </div>
+
+      <div class="tenant-info">
+        <h3 class="tenant-name">{{ t.companyName }}</h3>
+        <div class="tenant-key">🔑 {{ t.tenantKey }}</div>
+        <div class="tenant-meta">
+          <span [ngClass]="getStatusClass(t.status)">{{ t.status }}</span>
+        </div>
+      </div>
+
+      <div class="tenant-actions">
+        <button class="btn btn-ghost btn-sm"
+                (click)="toggleStatus(t)"
+                [title]="t.status === 'ACTIVE' ? 'Suspend' : 'Activate'">
+          {{ t.status === 'ACTIVE' ? '🔒 Suspend' : '✅ Activate' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onboard Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card glass-panel animate-fade-in" (click)="$event.stopPropagation()">
+      <h3>🏢 Onboard New Tenant</h3>
+      <p class="text-muted mb-5">This will provision a new isolated database and create an admin user.</p>
+
+      <div class="toast toast-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <div class="section-label">Tenant Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input type="text" class="form-control" [(ngModel)]="newTenant.name"
+                 (blur)="autoFillKey()" placeholder="e.g. Ayurveda Herbs Co.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tenant Key * <span class="hint">(unique slug)</span></label>
+          <input type="text" class="form-control font-mono" [(ngModel)]="newTenant.tenantKey"
+                 placeholder="e.g. ayurveda_herbs">
+        </div>
+      </div>
+
+      <div class="section-label mt-4">Admin User</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Admin Username *</label>
+          <input type="text" class="form-control" [(ngModel)]="newTenant.adminUsername" placeholder="admin">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" class="form-control" [(ngModel)]="newTenant.adminFullName" placeholder="Admin Name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password *</label>
+        <input type="password" class="form-control" [(ngModel)]="newTenant.adminPassword" placeholder="••••••••">
+      </div>
+
+      <div class="section-label mt-4">Branding <span class="hint">(optional)</span></div>
+      <div class="form-row">
+        <div class="form-group color-group">
+          <label class="form-label">Primary Color</label>
+          <div class="color-input-row">
+            <input type="color" class="color-swatch" [(ngModel)]="newTenant.primaryColor">
+            <input type="text" class="form-control" [(ngModel)]="newTenant.primaryColor" maxlength="7">
+          </div>
+        </div>
+        <div class="form-group color-group">
+          <label class="form-label">Accent Color</label>
+          <div class="color-input-row">
+            <input type="color" class="color-swatch" [(ngModel)]="newTenant.accentColor">
+            <input type="text" class="form-control" [(ngModel)]="newTenant.accentColor" maxlength="7">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Logo URL</label>
+        <input type="text" class="form-control" [(ngModel)]="newTenant.logoUrl" placeholder="https://...">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button class="btn btn-primary btn-lg" (click)="onboardTenant()" [disabled]="isSaving">
+          <span class="spinner" *ngIf="isSaving"></span>
+          {{ isSaving ? 'Provisioning...' : '🚀 Onboard Tenant' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,103 @@
+<div class="dispatch-page page-content">
+  <div class="page-header">
+    <h1 class="title-with-icon"><app-icon name="dispatch" [size]="22"></app-icon> Dispatch Queue</h1>
+    <div class="header-actions">
+      <span class="selected-count" *ngIf="selectedOrderIds.size > 0">
+        {{ selectedOrderIds.size }} selected
+      </span>
+      <button class="btn btn-accent" (click)="generateLabels()"
+              [disabled]="selectedOrderIds.size === 0 || isGenerating">
+        <span class="spinner" *ngIf="isGenerating"></span>
+        <svg *ngIf="!isGenerating" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+        </svg>
+        {{ isGenerating ? 'Generating...' : 'Generate Labels' }}
+      </button>
+      <button class="btn btn-primary" (click)="markDispatched()"
+              [disabled]="selectedOrderIds.size === 0 || isDispatching">
+        <span class="spinner" *ngIf="isDispatching"></span>
+        <app-icon *ngIf="!isDispatching" name="dispatch" [size]="16"></app-icon>
+        {{ isDispatching ? 'Processing...' : 'Mark Dispatched' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast toast-success animate-fade-in" *ngIf="successMessage">{{ successMessage }}</div>
+  <div class="toast toast-error animate-fade-in" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <!-- Courier Selection -->
+  <div class="courier-bar card" *ngIf="selectedOrderIds.size > 0">
+    <label class="form-label">Courier Partner</label>
+    <select class="form-control courier-select" [(ngModel)]="courierPartner">
+      <option value="">Select courier...</option>
+      <option *ngFor="let c of couriers" [value]="c">{{ c }}</option>
+    </select>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner spinner-lg"></div>
+    <p>Loading dispatch queue...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state card" *ngIf="!isLoading && orders.length === 0">
+    <div class="empty-icon"><app-icon name="dispatch" [size]="44"></app-icon></div>
+    <h3>Queue is empty</h3>
+    <p>No orders are ready for dispatch. Orders in PAID or PACKED status will appear here.</p>
+  </div>
+
+  <!-- Queue Table -->
+  <div class="card table-wrapper" *ngIf="!isLoading && orders.length > 0">
+    <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="check-col">
+            <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()" class="checkbox">
+          </th>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Payment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders" class="animate-fade-in"
+            [class.selected-row]="isSelected(order.id)"
+            (click)="toggleSelect(order.id)">
+          <td class="check-col" (click)="$event.stopPropagation()">
+            <input type="checkbox" [checked]="isSelected(order.id)"
+                   (change)="toggleSelect(order.id)" class="checkbox">
+          </td>
+          <td>
+            <a [routerLink]="['/orders', order.id]" class="order-number"
+               (click)="$event.stopPropagation()">{{ order.orderNumber }}</a>
+          </td>
+          <td class="text-muted">{{ order.orderDate }}</td>
+          <td>
+            <span class="customer-name">{{ order.customer?.name || '—' }}</span>
+            <span class="customer-phone" *ngIf="order.customer?.phone">{{ order.customer.phone }}</span>
+          </td>
+          <td class="text-center">{{ order.items?.length || 0 }}</td>
+          <td class="font-semibold">₹{{ order.totalAmount | number:'1.0-0' }}</td>
+          <td><span [ngClass]="getStatusClass(order.status)">{{ order.status }}</span></td>
+          <td><span [ngClass]="getStatusClass(order.paymentStatus)">{{ order.paymentStatus }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="btn btn-ghost btn-sm" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0">← Prev</button>
+    <button *ngFor="let page of pageNumbers" class="btn btn-ghost btn-sm page-btn"
+            [class.active]="page === currentPage" (click)="goToPage(page)">{{ page + 1 }}</button>
+    <button class="btn btn-ghost btn-sm" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">Next →</button>
+  </div>
+</div>

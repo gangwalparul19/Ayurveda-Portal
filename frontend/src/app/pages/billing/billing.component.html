@@ -1,0 +1,90 @@
+<div class="billing-page page-content">
+  <div class="page-header">
+    <h1 class="title-with-icon"><app-icon name="billing" [size]="22"></app-icon> Billing & Exports</h1>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast toast-success animate-fade-in" *ngIf="successMessage">{{ successMessage }}</div>
+  <div class="toast toast-error animate-fade-in" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <!-- Export Panel -->
+  <div class="export-panel card">
+    <h3 class="section-title">Export Orders</h3>
+    <p class="text-muted mb-4">Download order data in Vyapar-compatible CSV or GST JSON format.</p>
+
+    <div class="date-range-picker">
+      <div class="form-group">
+        <label class="form-label">From Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFrom">
+      </div>
+      <span class="date-arrow">→</span>
+      <div class="form-group">
+        <label class="form-label">To Date</label>
+        <input type="date" class="form-control" [(ngModel)]="dateTo">
+      </div>
+    </div>
+
+    <div class="export-actions">
+      <div class="export-card" (click)="exportVyapar()" [class.disabled]="isExporting">
+        <div class="export-icon"><app-icon name="reports" [size]="28"></app-icon></div>
+        <div class="export-info">
+          <h4>Vyapar CSV</h4>
+          <p>Invoice-level data compatible with Vyapar accounting software</p>
+        </div>
+        <div class="export-badge">CSV</div>
+      </div>
+
+      <div class="export-card" (click)="exportGst()" [class.disabled]="isExporting">
+        <div class="export-icon"><app-icon name="billing" [size]="28"></app-icon></div>
+        <div class="export-info">
+          <h4>GST Summary</h4>
+          <p>Tax summary with GSTIN, subtotal, tax amounts per invoice</p>
+        </div>
+        <div class="export-badge">JSON</div>
+      </div>
+    </div>
+
+    <div class="exporting-indicator" *ngIf="isExporting">
+      <div class="spinner"></div>
+      <span>Generating export...</span>
+    </div>
+  </div>
+
+  <!-- Export History -->
+  <div class="card mt-6">
+    <h3 class="section-title"><app-icon name="reports" [size]="18"></app-icon> Export History</h3>
+
+    <div class="loading-state" *ngIf="isLoadingHistory">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoadingHistory && exportHistory.length === 0">
+      <p class="text-muted">No exports yet. Generate your first export above.</p>
+    </div>
+
+    <div class="table-responsive">
+    <table class="data-table" *ngIf="!isLoadingHistory && exportHistory.length > 0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Range</th>
+          <th>Records</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let export of exportHistory">
+          <td class="text-muted">{{ export.generatedAt | date:'medium' }}</td>
+          <td>
+            <span class="export-type-badge" [ngClass]="'type-' + export.exportType?.toLowerCase()">
+              {{ export.exportType }}
+            </span>
+          </td>
+          <td>{{ export.dateRangeStart }} → {{ export.dateRangeEnd }}</td>
+          <td class="font-semibold">{{ export.recordCount }}</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>

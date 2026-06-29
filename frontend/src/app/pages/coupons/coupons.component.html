@@ -1,0 +1,194 @@
+<div class="page-container">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">Coupons</h1>
+      <p class="page-subtitle">Manage discount codes and promotional offers</p>
+    </div>
+    <button class="btn btn-primary" (click)="toggleCreateForm()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      {{ showCreateForm ? 'Cancel' : 'Create Coupon' }}
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+  <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <!-- ── Create Coupon Form ─────────────────────────────────── -->
+  <div class="card create-form-card" *ngIf="showCreateForm">
+    <div class="card-header">
+      <h2 class="card-title">New Coupon</h2>
+    </div>
+    <div class="create-form">
+      <div class="form-grid">
+        <!-- Code -->
+        <div class="form-group">
+          <label class="form-label">Code <span class="required">*</span></label>
+          <input class="form-control" type="text" [(ngModel)]="newCoupon.code"
+                 placeholder="e.g. WELCOME20" style="text-transform:uppercase">
+        </div>
+        <!-- Type -->
+        <div class="form-group">
+          <label class="form-label">Discount Type <span class="required">*</span></label>
+          <select class="form-control" [(ngModel)]="newCoupon.discountType">
+            <option value="PERCENT">Percentage (%)</option>
+            <option value="FLAT">Flat Amount (₹)</option>
+          </select>
+        </div>
+        <!-- Value -->
+        <div class="form-group">
+          <label class="form-label">Value <span class="required">*</span></label>
+          <input class="form-control" type="number" [(ngModel)]="newCoupon.discountValue"
+                 [placeholder]="newCoupon.discountType === 'PERCENT' ? 'e.g. 20 (%)' : 'e.g. 100 (₹)'" min="0">
+        </div>
+        <!-- Min Order -->
+        <div class="form-group">
+          <label class="form-label">Min Order Amount (₹)</label>
+          <input class="form-control" type="number" [(ngModel)]="newCoupon.minOrderAmount"
+                 placeholder="Optional" min="0">
+        </div>
+        <!-- Max Discount -->
+        <div class="form-group">
+          <label class="form-label">Max Discount (₹)</label>
+          <input class="form-control" type="number" [(ngModel)]="newCoupon.maxDiscount"
+                 placeholder="Optional — for % coupons" min="0">
+        </div>
+        <!-- Usage Limit -->
+        <div class="form-group">
+          <label class="form-label">Usage Limit</label>
+          <input class="form-control" type="number" [(ngModel)]="newCoupon.usageLimit"
+                 placeholder="Leave blank for unlimited" min="1">
+        </div>
+        <!-- Valid Until -->
+        <div class="form-group">
+          <label class="form-label">Valid Until</label>
+          <input class="form-control" type="date" [(ngModel)]="newCoupon.validUntil">
+        </div>
+        <!-- Description -->
+        <div class="form-group form-group-wide">
+          <label class="form-label">Description</label>
+          <input class="form-control" type="text" [(ngModel)]="newCoupon.description"
+                 placeholder="Internal note about this coupon">
+        </div>
+        <!-- Active -->
+        <div class="form-group form-group-inline">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="newCoupon.isActive">
+            <span>Active immediately</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" (click)="createCoupon()" [disabled]="creating">
+          <ng-container *ngIf="!creating">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Create Coupon
+          </ng-container>
+          <ng-container *ngIf="creating">
+            <span class="spinner"></span>
+            Creating…
+          </ng-container>
+        </button>
+        <button class="btn btn-ghost" (click)="toggleCreateForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Coupon List ───────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">All Coupons</h2>
+      <span class="badge badge-neutral" *ngIf="!loading">{{ coupons.length }} total</span>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-block" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Loading coupons…</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" *ngIf="!loading && coupons.length === 0">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+        <line x1="7" y1="7" x2="7.01" y2="7"/>
+      </svg>
+      <p>No coupons yet. Create your first one above.</p>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrapper" *ngIf="!loading && coupons.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Type</th>
+            <th>Value</th>
+            <th>Min Order</th>
+            <th>Valid Until</th>
+            <th>Usage</th>
+            <th>Status</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let coupon of coupons">
+            <td>
+              <span class="coupon-code">{{ coupon.code }}</span>
+              <span class="coupon-desc" *ngIf="coupon.description">{{ coupon.description }}</span>
+            </td>
+            <td>
+              <span class="type-badge" [class.type-percent]="coupon.discountType === 'PERCENT'" [class.type-flat]="coupon.discountType === 'FLAT'">
+                {{ coupon.discountType === 'PERCENT' ? 'Percent' : 'Flat' }}
+              </span>
+            </td>
+            <td class="value-cell">{{ formatDiscount(coupon) }}</td>
+            <td class="muted-cell">{{ coupon.minOrderAmount ? '₹' + coupon.minOrderAmount : '—' }}</td>
+            <td class="muted-cell">{{ formatDate(coupon.validUntil) }}</td>
+            <td class="muted-cell">
+              <span *ngIf="coupon.usageLimit">{{ coupon.usageCount ?? 0 }}/{{ coupon.usageLimit }}</span>
+              <span *ngIf="!coupon.usageLimit">{{ coupon.usageCount ?? 0 }} / ∞</span>
+            </td>
+            <td>
+              <span class="badge" [class.badge-active]="coupon.isActive" [class.badge-cancelled]="!coupon.isActive">
+                {{ coupon.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <button class="btn btn-sm btn-toggle"
+                      [class.btn-activate]="!coupon.isActive"
+                      [class.btn-deactivate]="coupon.isActive"
+                      [disabled]="actionInProgress === coupon.id"
+                      (click)="toggleCoupon(coupon)"
+                      [title]="coupon.isActive ? 'Deactivate' : 'Activate'">
+                <svg *ngIf="!coupon.isActive" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <svg *ngIf="coupon.isActive" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                {{ coupon.isActive ? 'Deactivate' : 'Activate' }}
+              </button>
+              <button class="btn btn-sm btn-danger"
+                      [disabled]="actionInProgress === coupon.id"
+                      (click)="deleteCoupon(coupon)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { Product, ProductPage } from '../models/product.model';
 import { StorefrontConfig } from '../models/storefront-config.model';
 import { OrderRequest } from '../models/cart.model';
@@ -9,7 +10,7 @@ import { OrderRequest } from '../models/cart.model';
   providedIn: 'root'
 })
 export class StorefrontApiService {
-  private readonly API_URL = 'http://localhost:8080/api/storefront';
+  private readonly API_URL = `${environment.apiUrl}/storefront`;
 
   constructor(private http: HttpClient) {}
 
@@ -119,7 +120,7 @@ export class StorefrontApiService {
 
   getAdminPendingReviews(adminToken: string, page = 0): Observable<any> {
     const params = new HttpParams().set('page', page.toString());
-    return this.http.get('http://localhost:8080/api/reviews/pending', {
+    return this.http.get(`${environment.apiUrl}/reviews/pending`, {
       params,
       ...this.bearerHeaders(adminToken)
     });
@@ -127,7 +128,7 @@ export class StorefrontApiService {
 
   approveReview(adminToken: string, reviewId: number): Observable<any> {
     return this.http.patch(
-      `http://localhost:8080/api/reviews/${reviewId}/approve`,
+      `${environment.apiUrl}/reviews/${reviewId}/approve`,
       {},
       this.bearerHeaders(adminToken)
     );
@@ -135,7 +136,7 @@ export class StorefrontApiService {
 
   deleteReview(adminToken: string, reviewId: number): Observable<any> {
     return this.http.delete(
-      `http://localhost:8080/api/reviews/${reviewId}`,
+      `${environment.apiUrl}/reviews/${reviewId}`,
       this.bearerHeaders(adminToken)
     );
   }

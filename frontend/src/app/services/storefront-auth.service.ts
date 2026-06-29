@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 export interface SfUser {
   userId: number;
@@ -15,7 +16,7 @@ export interface SfUser {
 export class StorefrontAuthService {
   private readonly TOKEN_KEY = 'sf_access_token';
   private readonly USER_KEY = 'sf_user';
-  private readonly API = 'http://localhost:8080/api/storefront/auth';
+  private readonly API = `${environment.apiUrl}/storefront/auth`;
 
   private userSubject = new BehaviorSubject<SfUser | null>(this.loadUser());
   user$ = this.userSubject.asObservable();

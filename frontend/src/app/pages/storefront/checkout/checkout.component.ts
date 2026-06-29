@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { CartService } from '../../../services/cart.service';
 import { StorefrontApiService } from '../../../services/storefront-api.service';
 import { CartItem, OrderRequest } from '../../../models/cart.model';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-checkout',
@@ -47,7 +48,7 @@ export class CheckoutComponent implements OnInit {
   orderId: number | null = null;
   orderPaymentMethod: 'COD' | 'ONLINE' = 'COD';
 
-  private readonly API = 'http://localhost:8080/api';
+  private readonly API = environment.apiUrl;
 
   constructor(
     private cartService: CartService,

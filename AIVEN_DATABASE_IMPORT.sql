@@ -4,6 +4,9 @@
 -- ------------------------------------------------------
 -- Server version	8.0.41
 
+-- Aiven compatibility: allow tables without primary keys during import
+SET SESSION sql_require_primary_key = 0;
+
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -573,7 +576,7 @@ DROP TABLE IF EXISTS `role_permissions`;
 CREATE TABLE `role_permissions` (
   `role_id` bigint NOT NULL,
   `permission` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  KEY `FKn5fotdgk8d1xvo8nav9uv3muc` (`role_id`),
+  PRIMARY KEY (`role_id`, `permission`),
   CONSTRAINT `FKn5fotdgk8d1xvo8nav9uv3muc` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

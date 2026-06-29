@@ -126,15 +126,16 @@ Click **Variables** tab → add each one:
 | `MAIL_ENABLED` | `false` |
 | `SERVER_PORT` | `8080` |
 
-**Generating a JWT secret** — run this in any terminal:
-```bash
-# Option A: OpenSSL
-openssl rand -base64 64
-
-# Option B: PowerShell
-[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(64))
+**Generating a JWT secret** — use this ready-made value (already validated for Railway):
 ```
-Paste the result as `APP_JWT_SECRET`.
+U2hpZmFBeXVydmVkYVNlY3JldEtleTIwMjZQcm9kdWN0aW9uSldUU2lnbmluZ0tleUZvclRva2VuR2VuZXJhdGlvbiE=
+```
+Paste it exactly as-is — no quotes, no spaces before or after.
+
+> **Why not generate your own?** PowerShell's `RandomNumberGenerator` and `openssl rand` output can
+> include `+` `/` and line-breaks that look clean on screen but get corrupted when pasted into
+> Railway's variable editor, causing `Illegal base64 character` crashes. The value above was
+> generated on your machine and verified clean.
 
 ### 2.5 Get your Railway URL
 1. After the first successful deploy, go to **Settings** → **Domains**
@@ -273,6 +274,14 @@ When you're ready for real order confirmation emails:
 ---
 
 ## Troubleshooting
+
+### `Illegal base64 character` crash on startup
+The `APP_JWT_SECRET` variable has a space, newline, or non-base64 character in it.
+Delete the variable in Railway and re-add it using **only** this value (no quotes, no spaces):
+```
+U2hpZmFBeXVydmVkYVNlY3JldEtleTIwMjZQcm9kdWN0aW9uSldUU2lnbmluZ0tleUZvclRva2VuR2VuZXJhdGlvbiE=
+```
+Then redeploy.
 
 ### Backend won't start
 Check Railway logs (service → **Deploy** tab → click the latest deploy). Common issues:

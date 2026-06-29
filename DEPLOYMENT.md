@@ -190,17 +190,54 @@ git push
 2. Find `Ayurveda-Portal` in the repo list → **Import**
 
 ### 4.3 Configure build settings
-Vercel may auto-detect Angular. Confirm these settings:
+
+**Important:** Do NOT let Vercel auto-detect. Set these manually:
 
 | Setting | Value |
 |---------|-------|
-| Framework Preset | Angular (or Other) |
+| Framework Preset | **Other** (not Angular — select "Other") |
 | Root Directory | `frontend` |
 | Build Command | `npm run build` |
-| Output Directory | `dist/frontend/browser` |
+| Output Directory | `dist/frontend/browser` ← **must include `/browser`** |
 | Install Command | `npm install` |
 
-### 4.4 Deploy
+> The `/browser` suffix is required for Angular 19's `application` builder.
+> If Vercel auto-detects Angular and sets the output to `dist/frontend` (without `/browser`),
+> you will get a `404: NOT_FOUND` error on every page.
+
+### 4.4 Before deploying — update `vercel.json`
+
+You must replace the Railway URL placeholder in `frontend/vercel.json` first.
+Get your Railway URL from Railway → your service → **Settings → Domains**.
+
+Then edit `frontend/vercel.json`:
+```json
+{
+  "outputDirectory": "dist/frontend/browser",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://YOUR-APP.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/((?!api).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+Commit and push before importing to Vercel:
+```bash
+git add frontend/vercel.json
+git commit -m "Set Railway backend URL for Vercel proxy"
+git push
+```
+
+### 4.5 Deploy
 Click **Deploy**. The first build takes ~3 minutes.
 
 When done you get a URL like `https://ayurveda-portal.vercel.app`.
@@ -274,6 +311,13 @@ When you're ready for real order confirmation emails:
 ---
 
 ## Troubleshooting
+
+### `404: NOT_FOUND` on all pages (Vercel)
+Vercel can't find the build output. Two possible causes:
+
+1. **Wrong output directory** — in your Vercel project settings, go to **Settings → General → Build & Output Settings** and set Output Directory to `dist/frontend/browser` (must include `/browser`). Redeploy.
+
+2. **`vercel.json` not committed** — the `frontend/vercel.json` file must be pushed to GitHub before Vercel can pick it up. Check `git log` to confirm it's in the repo.
 
 ### `Illegal base64 character` crash on startup
 The `APP_JWT_SECRET` variable has a space, newline, or non-base64 character in it.

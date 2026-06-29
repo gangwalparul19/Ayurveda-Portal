@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '/api'
+  apiUrl: 'https://ayurveda-portal-production.up.railway.app/api'
 };

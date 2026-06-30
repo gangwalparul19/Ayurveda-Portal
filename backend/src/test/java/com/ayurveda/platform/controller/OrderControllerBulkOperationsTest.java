@@ -2,7 +2,9 @@ package com.ayurveda.platform.controller;
 
 import com.ayurveda.platform.dto.request.BulkStatusUpdateRequest;
 import com.ayurveda.platform.dto.response.OrderResponse;
+import com.ayurveda.platform.security.JwtTokenProvider;
 import com.ayurveda.platform.tenant.entity.Order;
+import com.ayurveda.platform.tenant.repository.SalespersonRepository;
 import com.ayurveda.platform.tenant.service.OrderService;
 import com.ayurveda.platform.util.WhatsAppTextParser;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,11 +41,17 @@ class OrderControllerBulkOperationsTest {
     @Mock
     private WhatsAppTextParser whatsAppParser;
 
+    @Mock
+    private SalespersonRepository salespersonRepository;
+
+    @Mock
+    private JwtTokenProvider jwtTokenProvider;
+
     private OrderController orderController;
 
     @BeforeEach
     void setUp() {
-        orderController = new OrderController(orderService, whatsAppParser);
+        orderController = new OrderController(orderService, whatsAppParser, salespersonRepository, jwtTokenProvider);
     }
 
     private BulkStatusUpdateRequest request(List<Long> ids) {

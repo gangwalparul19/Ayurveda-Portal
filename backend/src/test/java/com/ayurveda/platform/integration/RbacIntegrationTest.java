@@ -343,18 +343,17 @@ class RbacIntegrationTest {
         }
     }
 
-    // ==================== DOCUMENTED DEVIATION FROM Req 19.2 ====================
+    // ==================== SALESPERSON STATUS UPDATE (Req 19.2) ====================
 
     /**
-     * Documents the ACTUAL behavior: although Requirement 19.2 says a SALESPERSON should
-     * be allowed order status updates, {@code OrderController.updateOrderStatusV2}'s
-     * {@code @PreAuthorize} excludes SALESPERSON, so the request is denied with 403.
-     *
-     * <p>This test asserts the implemented behavior so the suite stays green, while
-     * flagging the requirement deviation for follow-up.
+     * A SALESPERSON is allowed to update order status via PUT /orders/{id}/status.
+     * Both the request-level matcher in SecurityConfig (which includes SALESPERSON)
+     * and the method-level {@code @PreAuthorize} on {@code updateOrderStatusV2} include
+     * the SALESPERSON role, so the request is authorized (HTTP 200). Validates
+     * Requirement 19.2 ("allow order status updates for salesperson").
      */
     @Test
-    @DisplayName("SALESPERSON is currently denied status updates (deviation from Req 19.2)")
+    @DisplayName("SALESPERSON is allowed to update order status (Req 19.2)")
     void salesperson_statusUpdate_currentlyForbidden() throws Exception {
         Long orderId = createOrderAsAdmin();
 
@@ -365,7 +364,7 @@ class RbacIntegrationTest {
                         .with(user("salesUser").roles(SALESPERSON))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusRequest)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     // ==================== HELPERS ====================

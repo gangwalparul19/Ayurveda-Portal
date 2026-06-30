@@ -3,8 +3,8 @@ spring:
     url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
-  
+    password:
+
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
@@ -14,16 +14,53 @@ spring:
       hibernate:
         format_sql: true
         use_sql_comments: false
-  
+
   h2:
     console:
       enabled: false
 
-# JWT Configuration for testing
-jwt:
-  secret: test-secret-key-for-integration-testing-minimum-256-bits-required-for-hs256-algorithm
-  expiration: 3600000 # 1 hour
-  refresh-expiration: 604800000 # 7 days
+  # Mail configuration for tests – uses a no-op/localhost stub so that
+  # JavaMailSender is auto-configured without a real SMTP server.
+  mail:
+    host: localhost
+    port: 25
+    username: test@test.com
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+    test-connection: false
+
+# Application-level JWT config (used by JwtTokenProvider via ${app.jwt.*})
+app:
+  jwt:
+    # 256-bit Base64-encoded secret (same value as the legacy jwt.secret key above)
+    secret: dGVzdC1zZWNyZXQta2V5LWZvci1pbnRlZ3JhdGlvbi10ZXN0aW5nLW1pbmltdW0tMjU2LWJpdHMtcmVxdWlyZWQtZm9yLWhzMjU2LWFsZ29yaXRobQ==
+    access-token-expiration-ms: 3600000
+    refresh-token-expiration-ms: 604800000
+
+  # Mail application properties (used by EmailNotificationService via ${app.mail.*})
+  mail:
+    from: noreply@test.com
+    enabled: false
+    company-name: Test Ayurveda
+    store-url: http://localhost:4200/store
+
+  # CORS (used by SecurityConfig via ${app.cors.allowed-origins})
+  cors:
+    allowed-origins: http://localhost:4200
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+
+  # Razorpay (used by RazorpayService via ${app.razorpay.*}; placeholder values are fine for tests)
+  razorpay:
+    key-id: rzp_test_PLACEHOLDER
+    key-secret: PLACEHOLDER_SECRET
+    currency: INR
 
 # Logging
 logging:

@@ -97,4 +97,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * accessing another customer's order detail.
      */
     Optional<Order> findByIdAndCustomerId(Long id, Long customerId);
+
+    /**
+     * Find orders for a specific salesperson with pagination.
+     */
+    Page<Order> findBySalespersonId(Long salespersonId, Pageable pageable);
+
+    /**
+     * Find all orders that have a salesperson assigned (for sales head view).
+     */
+    Page<Order> findBySalespersonIdIsNotNull(Pageable pageable);
 }

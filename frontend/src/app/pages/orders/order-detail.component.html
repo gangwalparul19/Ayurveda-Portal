@@ -73,7 +73,7 @@
           </div>
           <div class="info-item">
             <span class="info-label">Phone</span>
-            <span class="info-value">{{ order.customer.phone || '—' }}</span>
+            <span class="info-value">{{ getMaskedPhone(order.customer.phone) }}</span>
           </div>
           <div class="info-item wide">
             <span class="info-label">Address</span>

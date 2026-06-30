@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Order } from '../../core/models';
 import { IconComponent } from '../../shared/ui/icon.component';
 
@@ -27,6 +28,7 @@ export class OrderDetailComponent implements OnInit {
 
   constructor(
     private api: ApiService,
+    private authService: AuthService,
     private route: ActivatedRoute
   ) {}
 
@@ -115,5 +117,17 @@ export class OrderDetailComponent implements OnInit {
 
   isCancelledOrReturned(): boolean {
     return this.order?.status === 'CANCELLED' || this.order?.status === 'RETURNED';
+  }
+
+  isSalesperson(): boolean {
+    return this.authService.hasRole('SALESPERSON');
+  }
+
+  getMaskedPhone(phone?: string): string {
+    if (!phone) return '—';
+    if (this.isSalesperson() && phone.length >= 4) {
+      return '*' + phone.slice(-4);
+    }
+    return phone;
   }
 }

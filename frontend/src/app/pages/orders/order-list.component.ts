@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Order, OrderStatus, Page } from '../../core/models';
 import { IconComponent } from '../../shared/ui/icon.component';
 
@@ -34,7 +35,7 @@ export class OrderListComponent implements OnInit {
   newStatus = '';
   statusNotes = '';
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private authService: AuthService) {}
 
   ngOnInit(): void {
     this.loadOrders();
@@ -138,5 +139,17 @@ export class OrderListComponent implements OnInit {
 
   get hasActiveFilters(): boolean {
     return !!(this.statusFilter || this.dateFrom || this.dateTo);
+  }
+
+  isSalesperson(): boolean {
+    return this.authService.hasRole('SALESPERSON');
+  }
+
+  getMaskedPhone(phone?: string): string {
+    if (!phone) return '—';
+    if (this.isSalesperson() && phone.length >= 4) {
+      return '*' + phone.slice(-4);
+    }
+    return phone;
   }
 }

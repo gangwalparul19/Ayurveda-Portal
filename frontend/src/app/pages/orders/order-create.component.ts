@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Customer, Product, PaymentMode, PaymentStatus, Page } from '../../core/models';
 
 interface OrderLineItem {
@@ -54,7 +55,7 @@ export class OrderCreateComponent implements OnInit {
   isSubmitting = false;
   errorMessage = '';
 
-  constructor(private api: ApiService, private router: Router) {}
+  constructor(private api: ApiService, private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
     this.orderDate = this.todayIso();
@@ -201,5 +202,17 @@ export class OrderCreateComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/orders']);
+  }
+
+  isSalesperson(): boolean {
+    return this.authService.hasRole('SALESPERSON');
+  }
+
+  getMaskedPhone(phone?: string): string {
+    if (!phone) return '—';
+    if (this.isSalesperson() && phone.length >= 4) {
+      return '*' + phone.slice(-4);
+    }
+    return phone;
   }
 }

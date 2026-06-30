@@ -1,0 +1,440 @@
+{
+  "info": {
+    "name": "Sales Performance API Tests",
+    "description": "Test collection for Salesperson Dashboard and Leaderboard APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "salesperson_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "salesperson_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login as Salesperson (SP001)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('salesperson_token', jsonData.accessToken);",
+                  "    console.log('Salesperson token saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"sp001\",\n  \"password\": \"Sales@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('admin_token', jsonData.accessToken);",
+                  "    console.log('Admin token saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Salesperson Dashboard",
+      "item": [
+        {
+          "name": "Get Complete Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/{{salesperson_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "{{salesperson_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Today's Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/{{salesperson_id}}/today",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "{{salesperson_id}}", "today"]
+            }
+          }
+        },
+        {
+          "name": "Get Week Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/{{salesperson_id}}/week",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "{{salesperson_id}}", "week"]
+            }
+          }
+        },
+        {
+          "name": "Get Month Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/{{salesperson_id}}/month",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "{{salesperson_id}}", "month"]
+            }
+          }
+        },
+        {
+          "name": "Get Target Achievement",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/{{salesperson_id}}/target-achievement",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "{{salesperson_id}}", "target-achievement"]
+            }
+          }
+        },
+        {
+          "name": "Get Performance Trend (Last 7 Days)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/{{salesperson_id}}/trend",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "{{salesperson_id}}", "trend"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leaderboards",
+      "item": [
+        {
+          "name": "Get Weekly Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/leaderboard/week",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "leaderboard", "week"]
+            }
+          }
+        },
+        {
+          "name": "Get Monthly Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/leaderboard/month",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "leaderboard", "month"]
+            }
+          }
+        },
+        {
+          "name": "Get Quarterly Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/leaderboard/quarter",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "leaderboard", "quarter"]
+            }
+          }
+        },
+        {
+          "name": "Get My Rank - Week",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/{{salesperson_id}}/my-rank/week",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "{{salesperson_id}}", "my-rank", "week"]
+            }
+          }
+        },
+        {
+          "name": "Get My Rank - Month",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{salesperson_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson-dashboard/{{salesperson_id}}/my-rank/month",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson-dashboard", "{{salesperson_id}}", "my-rank", "month"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Target Management (Admin)",
+      "item": [
+        {
+          "name": "Set Monthly Target with 3 Tiers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salespersonId\": 1,\n  \"month\": 7,\n  \"year\": 2026,\n  \"targetAmount\": 55000,\n  \"targetTier1\": 45000,\n  \"targetTier2\": 55000,\n  \"targetTier3\": 65000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/salesperson/targets",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson", "targets"]
+            }
+          }
+        },
+        {
+          "name": "Get Target by Month",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson/targets?salespersonId={{salesperson_id}}&month=6&year=2026",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson", "targets"],
+              "query": [
+                {
+                  "key": "salespersonId",
+                  "value": "{{salesperson_id}}"
+                },
+                {
+                  "key": "month",
+                  "value": "6"
+                },
+                {
+                  "key": "year",
+                  "value": "2026"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recalculate Achievements",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson/targets/recalculate?month=6&year=2026",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson", "targets", "recalculate"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "6"
+                },
+                {
+                  "key": "year",
+                  "value": "2026"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Salesperson CRUD (Admin)",
+      "item": [
+        {
+          "name": "Get All Salespersons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Salesperson by Employee Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/salesperson/by-employee-code/SP001",
+              "host": ["{{baseUrl}}"],
+              "path": ["salesperson", "by-employee-code", "SP001"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

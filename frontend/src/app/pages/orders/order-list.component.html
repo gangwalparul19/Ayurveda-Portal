@@ -74,7 +74,7 @@
           <td>
             <div class="customer-cell">
               <span class="customer-name">{{ order.customer?.name || '—' }}</span>
-              <span class="customer-phone" *ngIf="order.customer?.phone">{{ order.customer.phone }}</span>
+              <span class="customer-phone" *ngIf="order.customer?.phone">{{ getMaskedPhone(order.customer.phone) }}</span>
             </div>
           </td>
           <td>

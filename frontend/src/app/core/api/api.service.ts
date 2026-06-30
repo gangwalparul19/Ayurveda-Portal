@@ -82,7 +82,7 @@ export class ApiService {
   }
 
   updateOrderStatus(orderId: number, status: string, notes?: string): Observable<Order> {
-    return this.http.patch<Order>(`${this.API}/orders/${orderId}/status`, { status, notes });
+    return this.http.put<Order>(`${this.API}/orders/${orderId}/status`, { status, notes });
   }
 
   parseWhatsApp(text: string): Observable<ParsedWhatsAppOrder> {

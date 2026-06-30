@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Order, Page } from '../../core/models';
 import { IconComponent } from '../../shared/ui/icon.component';
 
@@ -34,7 +35,7 @@ export class DispatchComponent implements OnInit {
 
   couriers = ['Delhivery', 'BlueDart', 'DTDC', 'Ecom Express', 'Xpressbees', 'India Post', 'Other'];
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private authService: AuthService) {}
 
   ngOnInit(): void {
     this.loadQueue();
@@ -144,5 +145,17 @@ export class DispatchComponent implements OnInit {
     const end = Math.min(this.totalPages, start + 5);
     for (let i = start; i < end; i++) pages.push(i);
     return pages;
+  }
+
+  isSalesperson(): boolean {
+    return this.authService.hasRole('SALESPERSON');
+  }
+
+  getMaskedPhone(phone?: string): string {
+    if (!phone) return '—';
+    if (this.isSalesperson() && phone.length >= 4) {
+      return '*' + phone.slice(-4);
+    }
+    return phone;
   }
 }

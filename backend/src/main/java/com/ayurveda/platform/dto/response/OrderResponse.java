@@ -58,6 +58,35 @@ public class OrderResponse {
         private String email;
         private String city;
         private String state;
+
+        /**
+         * Mask sensitive customer information for salesperson view.
+         */
+        public void maskSensitiveData() {
+            // Mask phone number - show last 4 digits only
+            if (phone != null && phone.length() > 4) {
+                String lastFour = phone.substring(phone.length() - 4);
+                this.phone = "XXX-XXX-" + lastFour;
+            }
+            
+            // Mask email - show first 4 chars and domain
+            if (email != null && email.contains("@")) {
+                String[] parts = email.split("@");
+                if (parts[0].length() > 4) {
+                    this.email = parts[0].substring(0, 4) + "****@" + parts[1];
+                } else {
+                    this.email = "****@" + parts[1];
+                }
+            }
+            
+            // Hide city and state
+            if (city != null) {
+                this.city = "[Hidden]";
+            }
+            if (state != null) {
+                this.state = "[Hidden]";
+            }
+        }
     }
 
     @Data

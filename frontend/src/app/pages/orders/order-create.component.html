@@ -22,7 +22,7 @@
           <div class="selected-customer-info">
             <span class="customer-name">{{ selectedCustomer.name }}</span>
             <span class="customer-meta">
-              <span *ngIf="selectedCustomer.phone">{{ selectedCustomer.phone }}</span>
+              <span *ngIf="selectedCustomer.phone">{{ getMaskedPhone(selectedCustomer.phone) }}</span>
               <span *ngIf="selectedCustomer.city"> · {{ selectedCustomer.city }}</span>
             </span>
           </div>
@@ -47,7 +47,7 @@
               <div class="customer-cell">
                 <span class="customer-name">{{ c.name }}</span>
                 <span class="customer-phone">
-                  {{ c.phone }}<span *ngIf="c.city"> · {{ c.city }}</span>
+                  {{ getMaskedPhone(c.phone) }}<span *ngIf="c.city"> · {{ c.city }}</span>
                 </span>
               </div>
               <button type="button" class="btn btn-ghost btn-sm">Select</button>

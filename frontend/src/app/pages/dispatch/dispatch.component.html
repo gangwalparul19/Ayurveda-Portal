@@ -81,7 +81,7 @@
           <td class="text-muted">{{ order.orderDate }}</td>
           <td>
             <span class="customer-name">{{ order.customer?.name || '—' }}</span>
-            <span class="customer-phone" *ngIf="order.customer?.phone">{{ order.customer.phone }}</span>
+            <span class="customer-phone" *ngIf="order.customer?.phone">{{ getMaskedPhone(order.customer.phone) }}</span>
           </td>
           <td class="text-center">{{ order.items?.length || 0 }}</td>
           <td class="font-semibold">₹{{ order.totalAmount | number:'1.0-0' }}</td>

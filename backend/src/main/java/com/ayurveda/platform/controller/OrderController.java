@@ -3,12 +3,15 @@ package com.ayurveda.platform.controller;
 import com.ayurveda.platform.dto.request.*;
 import com.ayurveda.platform.dto.response.DuplicateCheckResult;
 import com.ayurveda.platform.dto.response.OrderResponse;
+import com.ayurveda.platform.security.JwtTokenProvider;
 import com.ayurveda.platform.tenant.entity.Order;
 import com.ayurveda.platform.tenant.entity.OrderItem;
 import com.ayurveda.platform.tenant.service.OrderService;
 import com.ayurveda.platform.util.WhatsAppTextParser;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -17,23 +20,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Order management controller.
- * Handles CRUD, status transitions, and WhatsApp text parsing.
- */
 @RestController
 @RequestMapping("/orders")
 @RequiredArgsConstructor
+@Slf4j
 public class OrderController {
 
     private final OrderService orderService;
     private final WhatsAppTextParser whatsAppParser;
+    private final com.ayurveda.platform.tenant.repository.SalespersonRepository salespersonRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'MANAGER', 'SALESPERSON', 'DISPATCHER')")
@@ -42,10 +45,63 @@ public class OrderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) Long salespersonId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable,
+            Authentication authentication,
+            HttpServletRequest request) {
 
-        return ResponseEntity.ok(
-                orderService.getOrdersAsResponse(status, from, to, salespersonId, pageable));
+        Long effectiveSalespersonId = salespersonId;
+        boolean isSalesperson = false;
+        
+        if (authentication != null) {
+            isSalesperson = authentication.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SALESPERSON"));
+            
+            if (isSalesperson) {
+                try {
+                    // Extract JWT token from request header
+                    String token = extractTokenFromRequest(request);
+                    if (token != null && jwtTokenProvider.validateToken(token)) {
+                        // Get platform user ID from JWT claims
+                        Long platformUserId = jwtTokenProvider.getUserIdFromToken(token);
+                        // Get the salesperson record for this user
+                        effectiveSalespersonId = salespersonRepository.findByPlatformUserId(platformUserId)
+                                .map(com.ayurveda.platform.tenant.entity.Salesperson::getId)
+                                .orElseThrow(() -> new RuntimeException("Salesperson record not found for user: " + platformUserId));
+                    } else {
+                        // If token is invalid, can't find salesperson - return no results
+                        effectiveSalespersonId = -1L;
+                    }
+                } catch (Exception e) {
+                    log.error("Error extracting salesperson ID from JWT", e);
+                    // If any error, return no results
+                    effectiveSalespersonId = -1L;
+                }
+            }
+        }
+
+        Page<OrderResponse> orders = orderService.getOrdersAsResponse(status, from, to, effectiveSalespersonId, pageable);
+        
+        // Mask customer details for salesperson role
+        if (isSalesperson) {
+            orders.getContent().forEach(order -> {
+                if (order.getCustomer() != null) {
+                    order.getCustomer().maskSensitiveData();
+                }
+            });
+        }
+        
+        return ResponseEntity.ok(orders);
+    }
+
+    /**
+     * Extract the Bearer token from the Authorization header.
+     */
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 
     @GetMapping("/{id}")
@@ -155,7 +211,7 @@ public class OrderController {
      * Requirements: 5.1-5.11, 6.1-6.3
      */
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'MANAGER', 'DISPATCHER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'MANAGER', 'DISPATCHER', 'SALESPERSON')")
     public ResponseEntity<OrderResponse> updateOrderStatusV2(
             @PathVariable Long id,
             @Valid @RequestBody UpdateOrderStatusRequest request,

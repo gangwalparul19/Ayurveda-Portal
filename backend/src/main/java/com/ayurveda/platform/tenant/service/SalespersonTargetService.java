@@ -3,6 +3,7 @@ package com.ayurveda.platform.tenant.service;
 import com.ayurveda.platform.exception.ResourceNotFoundException;
 import com.ayurveda.platform.tenant.entity.SalespersonTarget;
 import com.ayurveda.platform.tenant.repository.OrderRepository;
+import com.ayurveda.platform.tenant.repository.SalespersonPerformanceRepository;
 import com.ayurveda.platform.tenant.repository.SalespersonTargetRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,11 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Service for managing salesperson targets and tracking achievements.
@@ -27,6 +28,7 @@ public class SalespersonTargetService {
 
     private final SalespersonTargetRepository targetRepository;
     private final OrderRepository orderRepository;
+    private final SalespersonPerformanceRepository performanceRepository;
 
     /**
      * Create or update a target for a salesperson.
@@ -107,7 +109,9 @@ public class SalespersonTargetService {
     }
 
     /**
-     * Recalculate all achievements for a specific month/year based on actual orders.
+     * Recalculate all achievements for a specific month/year based on actual sales.
+     * Uses performance data if available, falls back to orders.
+     * Also determines which tier was achieved.
      */
     public void recalculateAchievements(Integer month, Integer year) {
         List<SalespersonTarget> targets = targetRepository.findAllByMonthAndYear(month, year);
@@ -117,15 +121,40 @@ public class SalespersonTargetService {
         LocalDate endDate = yearMonth.atEndOfMonth();
 
         for (SalespersonTarget target : targets) {
-            BigDecimal totalSales = orderRepository
-                    .findBySalespersonIdAndOrderDateBetween(
-                            target.getSalespersonUserId(), startDate, endDate)
-                    .stream()
-                    .map(order -> order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            // Try to get sales from performance data first (more accurate for commission-based tracking)
+            BigDecimal totalSales = performanceRepository
+                    .sumSalesBySalespersonAndDateRange(
+                            target.getSalespersonUserId(), startDate, endDate);
+            
+            // If no performance data exists, fall back to orders
+            if (totalSales == null || totalSales.compareTo(BigDecimal.ZERO) == 0) {
+                totalSales = orderRepository
+                        .findBySalespersonIdAndOrderDateBetween(
+                                target.getSalespersonUserId(), startDate, endDate)
+                        .stream()
+                        .map(order -> order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+            }
 
             target.setAchievedAmount(totalSales);
+            
+            // Determine tier achieved
+            Integer tierAchieved = 0;
+            if (target.getTargetTier1() != null && totalSales.compareTo(target.getTargetTier1()) >= 0) {
+                tierAchieved = 1;
+            }
+            if (target.getTargetTier2() != null && totalSales.compareTo(target.getTargetTier2()) >= 0) {
+                tierAchieved = 2;
+            }
+            if (target.getTargetTier3() != null && totalSales.compareTo(target.getTargetTier3()) >= 0) {
+                tierAchieved = 3;
+            }
+            target.setTierAchieved(tierAchieved);
+            
             targetRepository.save(target);
+            
+            log.info("Recalculated: salesperson {} for {}/{} - achieved: {}, tier: {}", 
+                    target.getSalespersonUserId(), month, year, totalSales, tierAchieved);
         }
 
         log.info("Recalculated achievements for {}/{} - {} salespersons updated", 
@@ -150,7 +179,7 @@ public class SalespersonTargetService {
         if (target.getTargetAmount().compareTo(BigDecimal.ZERO) > 0) {
             percentageAchieved = target.getAchievedAmount()
                     .multiply(BigDecimal.valueOf(100))
-                    .divide(target.getTargetAmount(), 2, BigDecimal.ROUND_HALF_UP);
+                    .divide(target.getTargetAmount(), 2, RoundingMode.HALF_UP);
         }
 
         return Map.of(
